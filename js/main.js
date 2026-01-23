@@ -12,13 +12,18 @@ const OMDB_BASE_URL = "https://www.omdbapi.com/";
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
   popular: `${BASE_URL}/movie/popular?api_key=${API_KEY}`,
+  search: `${BASE_URL}/search/movie?api_key=${API_KEY}`,
 };
+
+// Global State
+let searchTimeout = null;
 
 // Wait for DOM to Load
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
   handleNavbarScroll();
   setupModalListeners();
+  setupSearch();
 });
 
 // Initialize Application
@@ -52,35 +57,107 @@ async function fetchAndRenderMovies(url, containerId) {
     container.innerHTML = "";
 
     movies.forEach((movie) => {
-      const movieCard = document.createElement("div");
-      movieCard.className = "movie-card";
-
-      // Format date and rating
-      const releaseDate = movie.release_date
-        ? movie.release_date.split("-")[0]
-        : "N/A";
-      const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
-
-      movieCard.innerHTML = `
-                <img src="${IMAGE_BASE_URL}${movie.poster_path}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
-                <div class="card-overlay">
-                    <div class="card-info">
-                        <h3>${movie.title}</h3>
-                        <p>${releaseDate} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
-                    </div>
-                </div>
-            `;
-
-      movieCard.addEventListener("click", () => {
-        openModal(movie);
-      });
-
-      container.appendChild(movieCard);
+      const card = createMovieCard(movie);
+      container.appendChild(card);
     });
   } catch (error) {
     console.error("Error loading movies:", error);
     container.innerHTML =
       '<p class="error-msg">Failed to load movies. Please check your connection or API key.</p>';
+  }
+}
+
+// Helper to create movie card
+function createMovieCard(movie) {
+  const movieCard = document.createElement("div");
+  movieCard.className = "movie-card";
+
+  // Format date and rating
+  const releaseDate = movie.release_date
+    ? movie.release_date.split("-")[0]
+    : "N/A";
+  const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
+  const posterPath = movie.poster_path
+    ? `${IMAGE_BASE_URL}${movie.poster_path}`
+    : "https://via.placeholder.com/500x750?text=No+Image";
+
+  movieCard.innerHTML = `
+        <img src="${posterPath}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="card-overlay">
+            <div class="card-info">
+                <h3>${movie.title}</h3>
+                <p>${releaseDate} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
+            </div>
+        </div>
+    `;
+
+  movieCard.addEventListener("click", () => {
+    openModal(movie);
+  });
+
+  return movieCard;
+}
+
+// Search Logic
+function setupSearch() {
+  const searchInput = document.getElementById("search-input");
+  const searchToggle = document.getElementById("search-toggle");
+
+  searchToggle.addEventListener("click", () => {
+    searchInput.focus();
+  });
+
+  searchInput.addEventListener("input", (e) => {
+    const query = e.target.value.trim();
+
+    // Debounce search
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    searchTimeout = setTimeout(() => {
+      handleSearch(query);
+    }, 400);
+  });
+}
+
+async function handleSearch(query) {
+  const homeContent = document.getElementById("homepage-content");
+  const searchView = document.getElementById("search-view");
+  const resultsGrid = document.getElementById("search-results-grid");
+  const searchTitle = document.getElementById("search-query-title");
+
+  if (!query || query.length === 0) {
+    // Show home content, hide search view
+    homeContent.style.display = "block";
+    searchView.style.display = "none";
+    return;
+  }
+
+  // Hide home, show search
+  homeContent.style.display = "none";
+  searchView.style.display = "block";
+  searchTitle.innerText = `Searching for "${query}"...`;
+  resultsGrid.innerHTML = '<div class="loading-results">Loading results...</div>';
+
+  try {
+    const response = await fetch(`${ENDPOINTS.search}&query=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    const movies = data.results;
+
+    resultsGrid.innerHTML = "";
+    searchTitle.innerText = `Search results for "${query}"`;
+
+    if (!movies || movies.length === 0) {
+      resultsGrid.innerHTML = '<p class="no-results">No results found for your search.</p>';
+      return;
+    }
+
+    movies.forEach((movie) => {
+      const card = createMovieCard(movie);
+      resultsGrid.appendChild(card);
+    });
+  } catch (error) {
+    console.error("Search Error:", error);
+    resultsGrid.innerHTML = '<p class="error-msg">Failed to fetch search results.</p>';
   }
 }
 
@@ -202,12 +279,16 @@ async function openModal(movie) {
   modalTitle.innerText = movie.title;
   const year = movie.release_date ? movie.release_date.split("-")[0] : "";
   modalDate.innerText = year || "N/A";
-  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average.toFixed(1)} Rating`;
+  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average? movie.vote_average.toFixed(1) : 'N/A'} Rating`;
   modalOverview.innerText = movie.overview || "No description available.";
 
   // Set backdrop image
   const backdropPath = movie.backdrop_path || movie.poster_path;
-  modalHeaderImg.style.backgroundImage = `url(${BACKDROP_BASE_URL}${backdropPath})`;
+  if (backdropPath) {
+      modalHeaderImg.style.backgroundImage = `url(${BACKDROP_BASE_URL}${backdropPath})`;
+  } else {
+      modalHeaderImg.style.background = "#111";
+  }
 
   // Update Play Button
   playBtn.onclick = () => playTrailer(movie.id);
@@ -248,7 +329,7 @@ function closeModal() {
 function handleNavbarScroll() {
   const navbar = document.getElementById("navbar");
   window.addEventListener("scroll", () => {
-    if (window.scrollY > 100) {
+    if (window.scrollY > 10) {
       navbar.classList.add("scrolled");
     } else {
       navbar.classList.remove("scrolled");
