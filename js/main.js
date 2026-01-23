@@ -102,6 +102,30 @@ function setupModalListeners() {
   });
 }
 
+async function playTrailer(movieId) {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/movie/${movieId}/videos?api_key=${API_KEY}`,
+    );
+    const data = await response.json();
+    const videos = data.results;
+
+    // Find official trailer on YouTube
+    const trailer = videos.find(
+      (v) => v.type === "Trailer" && v.site === "YouTube",
+    );
+
+    if (trailer) {
+      window.open(`https://www.youtube.com/watch?v=${trailer.key}`, "_blank");
+    } else {
+      alert("Trailer not available");
+    }
+  } catch (error) {
+    console.error("Error fetching trailer:", error);
+    alert("Error loading trailer");
+  }
+}
+
 function openModal(movie) {
   const modal = document.getElementById("movie-modal");
   const modalTitle = document.getElementById("modal-title");
@@ -109,6 +133,7 @@ function openModal(movie) {
   const modalRating = document.getElementById("modal-rating");
   const modalOverview = document.getElementById("modal-overview");
   const modalHeaderImg = document.getElementById("modal-header-image");
+  const playBtn = document.getElementById("modal-play-btn");
 
   // Populate data
   modalTitle.innerText = movie.title;
@@ -123,6 +148,9 @@ function openModal(movie) {
   // Set backdrop image
   const backdropPath = movie.backdrop_path || movie.poster_path;
   modalHeaderImg.style.backgroundImage = `url(${BACKDROP_BASE_URL}${backdropPath})`;
+
+  // Update Play Button
+  playBtn.onclick = () => playTrailer(movie.id);
 
   // Show modal
   modal.style.display = "block";
