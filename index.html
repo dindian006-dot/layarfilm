@@ -22,7 +22,7 @@
         <h1 class="logo">LAYARFILM</h1>
         <ul class="nav-links">
           <li><a href="#" class="active" id="nav-home">Home</a></li>
-          <li><a href="#">TV Shows</a></li>
+          <li><a href="#" id="nav-tv">TV Shows</a></li>
           <li><a href="#">Movies</a></li>
           <li><a href="#">New & Popular</a></li>
           <li><a href="#" id="nav-mylist">My List</a></li>
@@ -92,6 +92,31 @@
           <!-- Results injected here -->
         </div>
       </section>
+    </div>
+
+    <!-- TV Shows View (Hidden by default) -->
+    <div id="tv-shows-view" style="display: none;">
+      <header class="hero" id="tv-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">Trending TV Shows</h1>
+          <p class="hero-description">
+            Binge-watch the latest series everyone is talking about. Warning: May cause loss of sleep.
+          </p>
+        </div>
+        <div class="hero-fade-bottom"></div>
+      </header>
+
+      <main class="main-container">
+        <section class="movie-section">
+          <h2 class="section-title">Trending TV Series</h2>
+          <div class="movie-row" id="tv-trending-row"></div>
+        </section>
+
+        <section class="movie-section">
+          <h2 class="section-title">Popular on TV</h2>
+          <div class="movie-row" id="tv-popular-row"></div>
+        </section>
+      </main>
     </div>
 
     <!-- My List View (Hidden by default) -->

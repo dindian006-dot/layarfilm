@@ -12,11 +12,18 @@ const OMDB_BASE_URL = "https://www.omdbapi.com/";
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
   popular: `${BASE_URL}/movie/popular?api_key=${API_KEY}`,
-  search: `${BASE_URL}/search/movie?api_key=${API_KEY}`,
+  search: `${BASE_URL}/search/multi?api_key=${API_KEY}`, // Changed to multi search
+  tvTrending: `${BASE_URL}/trending/tv/week?api_key=${API_KEY}`,
+  tvPopular: `${BASE_URL}/tv/popular?api_key=${API_KEY}`,
 };
 
 // Global State
 let searchTimeout = null;
+// Track loaded content to avoid re-fetching
+const loadedContent = {
+    movies: false,
+    tv: false
+};
 
 // Wait for DOM to Load
 document.addEventListener("DOMContentLoaded", () => {
@@ -29,95 +36,113 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Initialize Application
 async function initApp() {
+  if (loadedContent.movies) return;
+
   // Fetch and render Trending Movies (for Continue Watching)
-  await fetchAndRenderMovies(ENDPOINTS.trending, "trending-row");
+  await fetchAndRenderContent(ENDPOINTS.trending, "trending-row", "movie");
 
   // Fetch and render Popular Movies (for Trending Now)
-  await fetchAndRenderMovies(ENDPOINTS.popular, "popular-row");
+  await fetchAndRenderContent(ENDPOINTS.popular, "popular-row", "movie");
+  
+  loadedContent.movies = true;
 }
 
-// Fetch and Render Movies from TMDB
-async function fetchAndRenderMovies(url, containerId) {
+async function initTVApp() {
+    if (loadedContent.tv) return;
+
+    // Fetch and render Trending TV
+    await fetchAndRenderContent(ENDPOINTS.tvTrending, "tv-trending-row", "tv");
+
+    // Fetch and render Popular TV
+    await fetchAndRenderContent(ENDPOINTS.tvPopular, "tv-popular-row", "tv");
+
+    loadedContent.tv = true;
+}
+
+// Unified Fetch and Render
+async function fetchAndRenderContent(url, containerId, type) {
   const container = document.getElementById(containerId);
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+        throw new Error("Network response was not ok");
     }
 
     const data = await response.json();
-    const movies = data.results;
+    const results = data.results;
 
-    if (!movies || movies.length === 0) {
-      container.innerHTML = '<p class="error-msg">No movies found.</p>';
+    if (!results || results.length === 0) {
+      container.innerHTML = '<p class="error-msg">No content found.</p>';
       return;
     }
 
     // Clear container before rendering
     container.innerHTML = "";
 
-    movies.forEach((movie) => {
-      const card = createMovieCard(movie);
+    results.forEach((item) => {
+      // For multi-search or mixed content, fallback to passed type if available
+      const mediaType = item.media_type || type; 
+      const card = createContentCard(item, mediaType);
       container.appendChild(card);
     });
   } catch (error) {
-    console.error("Error loading movies:", error);
+    console.error("Error loading content:", error);
     container.innerHTML =
-      '<p class="error-msg">Failed to load movies. Please check your connection or API key.</p>';
+      '<p class="error-msg">Failed to load content. Please check your connection or API key.</p>';
   }
 }
 
-// Helper to create movie card
-function createMovieCard(movie) {
-  const movieCard = document.createElement("div");
-  movieCard.className = "movie-card";
+// Helper to create content card (Movie/TV)
+function createContentCard(item, type) {
+  const card = document.createElement("div");
+  card.className = "movie-card";
 
-  // Format date and rating
-  const releaseDate = movie.release_date
-    ? movie.release_date.split("-")[0]
-    : "N/A";
-  const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
-  const posterPath = movie.poster_path
-    ? `${IMAGE_BASE_URL}${movie.poster_path}`
+  // Normalize data fields
+  const title = item.title || item.name;
+  const date = item.release_date || item.first_air_date;
+  const year = date ? date.split("-")[0] : "N/A";
+  const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
+  const posterPath = item.poster_path
+    ? `${IMAGE_BASE_URL}${item.poster_path}`
     : "https://via.placeholder.com/500x750?text=No+Image";
 
-  // Check if movie is in My List
-  const inList = isInMyList(movie.id);
+  // Check if item is in My List
+  const inList = isInMyList(item.id);
 
-  movieCard.innerHTML = `
-        <img src="${posterPath}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
-        <div class="list-btn ${inList ? "active" : ""}" title="${inList ? "Remove from List" : "Add to My List"}">
+  card.innerHTML = `
+        <img src="${posterPath}" alt="${title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="list-btn ${inList ? "active" : ""}" title="${inList ? "Remove from List" : "Add to My List"}" data-id="${item.id}">
             <i class="fas ${inList ? "fa-check" : "fa-plus"}"></i>
         </div>
         <div class="card-overlay">
             <div class="card-info">
-                <h3>${movie.title}</h3>
-                <p>${releaseDate} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
+                <h3>${title}</h3>
+                <p>${year} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
             </div>
         </div>
     `;
 
   // Click card to open modal
-  movieCard.addEventListener("click", (e) => {
+  card.addEventListener("click", (e) => {
     // Don't open modal if clicking the list button
     if (e.target.closest(".list-btn")) return;
-    openModal(movie);
+    openModal(item, type);
   });
 
   // Toggle My List
-  const listBtn = movieCard.querySelector(".list-btn");
+  const listBtn = card.querySelector(".list-btn");
   listBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    toggleMyList(movie);
+    toggleMyList(item, type);
     // Refresh card state
-    const isActive = isInMyList(movie.id);
+    const isActive = isInMyList(item.id);
     listBtn.classList.toggle("active", isActive);
     listBtn.querySelector("i").className = `fas ${isActive ? "fa-check" : "fa-plus"}`;
     listBtn.title = isActive ? "Remove from List" : "Add to My List";
   });
 
-  return movieCard;
+  return card;
 }
 
 // LocalStorage helpers
@@ -131,20 +156,21 @@ function isInMyList(id) {
   return list.some((m) => m.id === id);
 }
 
-function toggleMyList(movie) {
+function toggleMyList(item, type) {
   let list = getMyList();
-  const index = list.findIndex((m) => m.id === movie.id);
+  const index = list.findIndex((m) => m.id === item.id);
 
   if (index > -1) {
     list.splice(index, 1);
   } else {
-    // Store only necessary info
+    // Normalize and Store necessary info
     list.push({
-      id: movie.id,
-      title: movie.title,
-      poster_path: movie.poster_path,
-      vote_average: movie.vote_average,
-      release_date: movie.release_date,
+      id: item.id,
+      title: item.title || item.name,
+      poster_path: item.poster_path,
+      vote_average: item.vote_average,
+      release_date: item.release_date || item.first_air_date,
+      type: type // Store type to open correct modal later
     });
   }
 
@@ -159,12 +185,20 @@ function toggleMyList(movie) {
 // Navigation Logic
 function setupNavigation() {
   const navHome = document.getElementById("nav-home");
+  const navTv = document.getElementById("nav-tv");
   const navMyList = document.getElementById("nav-mylist");
 
   navHome.addEventListener("click", (e) => {
     e.preventDefault();
     showView("homepage");
     setActiveLink(navHome);
+  });
+
+  navTv.addEventListener("click", (e) => {
+      e.preventDefault();
+      showView("tv");
+      setActiveLink(navTv);
+      initTVApp(); // Load TV content if not loaded
   });
 
   navMyList.addEventListener("click", (e) => {
@@ -177,15 +211,17 @@ function setupNavigation() {
 
 function showView(viewName) {
   const homeContent = document.getElementById("homepage-content");
+  const tvContent = document.getElementById("tv-shows-view");
   const searchView = document.getElementById("search-view");
   const mylistView = document.getElementById("mylist-view");
 
   homeContent.style.display = viewName === "homepage" ? "block" : "none";
+  tvContent.style.display = viewName === "tv" ? "block" : "none";
   searchView.style.display = viewName === "search" ? "block" : "none";
   mylistView.style.display = viewName === "mylist" ? "block" : "none";
 
-  // If returning to home, clear search
-  if (viewName === "homepage") {
+  // If returning to home/tv, clear search
+  if (viewName === "homepage" || viewName === "tv") {
     document.getElementById("search-input").value = "";
   }
 }
@@ -208,8 +244,8 @@ function renderMyList() {
     return;
   }
 
-  list.forEach((movie) => {
-    const card = createMovieCard(movie);
+  list.forEach((item) => {
+    const card = createContentCard(item, item.type || 'movie'); // Default to movie if type missing
     grid.appendChild(card);
   });
 }
@@ -237,18 +273,20 @@ function setupSearch() {
 
 async function handleSearch(query) {
   const homeContent = document.getElementById("homepage-content");
+  const tvContent = document.getElementById("tv-shows-view");
   const searchView = document.getElementById("search-view");
   const mylistView = document.getElementById("mylist-view");
   const resultsGrid = document.getElementById("search-results-grid");
   const searchTitle = document.getElementById("search-query-title");
 
   if (!query || query.length === 0) {
-    showView("homepage");
+    showView("homepage"); // Default back to homepage
     return;
   }
 
   // Hide others, show search
   homeContent.style.display = "none";
+  tvContent.style.display = "none";
   mylistView.style.display = "none";
   searchView.style.display = "block";
 
@@ -258,18 +296,20 @@ async function handleSearch(query) {
   try {
     const response = await fetch(`${ENDPOINTS.search}&query=${encodeURIComponent(query)}`);
     const data = await response.json();
-    const movies = data.results;
+    const results = data.results;
 
     resultsGrid.innerHTML = "";
     searchTitle.innerText = `Search results for "${query}"`;
 
-    if (!movies || movies.length === 0) {
+    const filteredResults = results.filter(item => item.media_type === "movie" || item.media_type === "tv");
+
+    if (!filteredResults || filteredResults.length === 0) {
       resultsGrid.innerHTML = '<p class="no-results">No results found for your search.</p>';
       return;
     }
 
-    movies.forEach((movie) => {
-      const card = createMovieCard(movie);
+    filteredResults.forEach((item) => {
+      const card = createContentCard(item, item.media_type);
       resultsGrid.appendChild(card);
     });
   } catch (error) {
@@ -307,17 +347,18 @@ function setupModalListeners() {
   });
 }
 
-async function playTrailer(movieId) {
+async function playTrailer(id, type) {
   try {
+    const endpoint = type === 'tv' ? 'tv' : 'movie';
     const response = await fetch(
-      `${BASE_URL}/movie/${movieId}/videos?api_key=${API_KEY}`,
+      `${BASE_URL}/${endpoint}/${id}/videos?api_key=${API_KEY}`,
     );
     const data = await response.json();
     const videos = data.results;
 
     // Find official trailer on YouTube
     const trailer = videos.find(
-      (v) => v.type === "Trailer" && v.site === "YouTube",
+      (v) => (v.type === "Trailer" || v.type === "Teaser") && v.site === "YouTube",
     );
 
     if (trailer) {
@@ -360,10 +401,11 @@ function closeVideoModal() {
 }
 
 // Fetch additional data from OMDB
-async function fetchOMDBData(title, year) {
+async function fetchOMDBData(title, year, type) {
+   const outputType = type === 'tv' ? 'series' : 'movie';
   try {
     const response = await fetch(
-      `${OMDB_BASE_URL}?t=${encodeURIComponent(title)}&y=${year}&apikey=${OMDB_API_KEY}`,
+      `${OMDB_BASE_URL}?t=${encodeURIComponent(title)}&y=${year}&type=${outputType}&apikey=${OMDB_API_KEY}`,
     );
     const data = await response.json();
     return data.Response === "True" ? data : null;
@@ -373,7 +415,19 @@ async function fetchOMDBData(title, year) {
   }
 }
 
-async function openModal(movie) {
+// Fetch TV specific details (Seasons/Episodes)
+async function fetchTVDetails(id) {
+    try {
+        const response = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`);
+        const data = await response.json();
+        return data; 
+    } catch(e) {
+        console.error("TV Details Error", e);
+        return null;
+    }
+}
+
+async function openModal(item, type) {
   const modal = document.getElementById("movie-modal");
   const modalTitle = document.getElementById("modal-title");
   const modalDate = document.getElementById("modal-date");
@@ -381,7 +435,6 @@ async function openModal(movie) {
   const modalOverview = document.getElementById("modal-overview");
   const modalHeaderImg = document.getElementById("modal-header-image");
   const playBtn = document.getElementById("modal-play-btn");
-  const listBtn = document.getElementById("modal-plus-btn");
 
   // Enriched data placeholders
   const modalRuntime = document.getElementById("modal-runtime");
@@ -392,19 +445,22 @@ async function openModal(movie) {
   modalRuntime.innerText = "";
   modalImdb.style.display = "none";
   modalActors.innerText = "";
+  
+  const title = item.title || item.name;
+  const date = item.release_date || item.first_air_date;
+  const year = date ? date.split("-")[0] : "";
 
-  // Populate basic TMDB data
-  modalTitle.innerText = movie.title;
-  const year = movie.release_date ? movie.release_date.split("-")[0] : "";
+  // Populate basic data
+  modalTitle.innerText = title;
   modalDate.innerText = year || "N/A";
-  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average? movie.vote_average.toFixed(1) : 'N/A'} Rating`;
-  modalOverview.innerText = movie.overview || "No description available.";
+  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${item.vote_average? item.vote_average.toFixed(1) : 'N/A'} Rating`;
+  modalOverview.innerText = item.overview || "No description available.";
 
   // My List button state in modal
-  refreshModalListBtn(movie);
+  refreshModalListBtn(item, type);
 
   // Set backdrop image
-  const backdropPath = movie.backdrop_path || movie.poster_path;
+  const backdropPath = item.backdrop_path || item.poster_path;
   if (backdropPath) {
       modalHeaderImg.style.backgroundImage = `url(${BACKDROP_BASE_URL}${backdropPath})`;
   } else {
@@ -412,27 +468,38 @@ async function openModal(movie) {
   }
 
   // Update Play Button
-  playBtn.onclick = () => playTrailer(movie.id);
+  playBtn.onclick = () => playTrailer(item.id, type);
 
   // Update List Button in Modal
   const modalPlusBtn = document.getElementById("modal-plus-btn");
   modalPlusBtn.onclick = () => {
-    toggleMyList(movie);
-    refreshModalListBtn(movie);
+    toggleMyList(item, type);
+    refreshModalListBtn(item, type);
     // Also refresh any cards on screen
     renderMyList();
-    initApp(); // Re-init home rows to update card buttons
+    // Update active view content if needed
+    if(document.getElementById("homepage-content").style.display === "block"){
+        // Could re-init but might be heavy. Buttons usually update via CSS classes if IDs match.
+    }
   };
 
   // Show modal
   modal.style.display = "block";
   document.body.style.overflow = "hidden"; // Prevent background scroll
 
+  // Special TV Data Fetching (Seasons/Episodes)
+  if (type === 'tv') {
+      const tvDetails = await fetchTVDetails(item.id);
+      if (tvDetails) {
+        modalRuntime.innerText = `| ${tvDetails.number_of_seasons} Season${tvDetails.number_of_seasons > 1 ? 's' : ''}`;
+      }
+  }
+
   // Fetch and apply OMDB data
   if (year) {
-    const omdbData = await fetchOMDBData(movie.title, year);
+    const omdbData = await fetchOMDBData(title, year, type);
     if (omdbData) {
-      if (omdbData.Runtime && omdbData.Runtime !== "N/A") {
+      if (omdbData.Runtime && omdbData.Runtime !== "N/A" && type !== 'tv') {
         modalRuntime.innerText = `| ${omdbData.Runtime}`;
       }
       if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
@@ -446,9 +513,9 @@ async function openModal(movie) {
   }
 }
 
-function refreshModalListBtn(movie) {
+function refreshModalListBtn(item, type) {
     const modalPlusBtn = document.getElementById("modal-plus-btn");
-    const inList = isInMyList(movie.id);
+    const inList = isInMyList(item.id);
     modalPlusBtn.innerHTML = `<i class="fas ${inList ? "fa-check" : "fa-plus"}"></i> ${inList ? "In My List" : "My List"}`;
     if (inList) {
         modalPlusBtn.style.color = "var(--netflix-red)";
