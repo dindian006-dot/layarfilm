@@ -473,6 +473,16 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.btn-red {
+  background-color: var(--netflix-red);
+  color: var(--white);
+  border: none;
+}
+
+.btn-red:hover {
+  background-color: #f40612;
+}
+
 .legal-disclaimer {
   margin-top: 30px;
   font-size: 0.8rem;

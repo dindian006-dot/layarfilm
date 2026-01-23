@@ -534,6 +534,9 @@ async function openModal(item, type) {
 
   playBtn.onclick = () => playTrailer(item.id, type);
 
+  const watchBtn = document.getElementById("modal-watch-btn");
+  watchBtn.onclick = () => playFullMovie(item.id, type);
+
   const modalPlusBtn = document.getElementById("modal-plus-btn");
   modalPlusBtn.onclick = () => {
     toggleMyList(item, type);
@@ -600,4 +603,20 @@ function handleNavbarScroll() {
       navbar.classList.remove("scrolled");
     }
   });
+}
+
+function playFullMovie(id, type, season = 1, episode = 1) {
+    const videoModal = document.getElementById("video-modal");
+    const iframe = document.getElementById("trailer-iframe"); 
+    
+    let embedUrl = "";
+    
+    if (type === 'movie') {
+        embedUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1`;
+    } else if (type === 'tv') {
+        embedUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${season}&e=${episode}`;
+    }
+
+    iframe.src = embedUrl;
+    videoModal.style.display = "block";
 }
