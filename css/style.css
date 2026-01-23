@@ -428,9 +428,25 @@ body {
   font-weight: bold;
 }
 
-#modal-date {
+#modal-date,
+#modal-runtime {
   color: var(--white);
   font-weight: normal;
+}
+
+.imdb-badge {
+  background: #f5c518;
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: none; /* Shown only if exists */
+}
+
+.modal-actors {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 15px;
 }
 
 #modal-overview {

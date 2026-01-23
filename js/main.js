@@ -4,6 +4,10 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500/";
 const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/original/";
 
+// OMDB API Configuration
+const OMDB_API_KEY = "e5ef6fb7";
+const OMDB_BASE_URL = "https://www.omdbapi.com/";
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -134,34 +138,48 @@ async function playTrailer(movieId) {
 }
 
 function openVideoModal(videoKey) {
-    const videoModal = document.getElementById("video-modal");
-    const iframe = document.getElementById("trailer-iframe");
-    
-    // Set YouTube Embed URL with autoplay
-    iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
-    
-    // Show Modal
-    videoModal.style.display = "block";
-    document.body.style.overflow = "hidden";
+  const videoModal = document.getElementById("video-modal");
+  const iframe = document.getElementById("trailer-iframe");
+
+  // Set YouTube Embed URL with autoplay
+  iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
+
+  // Show Modal
+  videoModal.style.display = "block";
+  document.body.style.overflow = "hidden";
 }
 
 function closeVideoModal() {
-    const videoModal = document.getElementById("video-modal");
-    const iframe = document.getElementById("trailer-iframe");
-    
-    // Stop video by clearing src
-    iframe.src = "";
-    
-    // Hide Modal
-    videoModal.style.display = "none";
-    
-    // Restore overflow if movie modal is also closed
-    if (document.getElementById("movie-modal").style.display !== "block") {
-        document.body.style.overflow = "auto";
-    }
+  const videoModal = document.getElementById("video-modal");
+  const iframe = document.getElementById("trailer-iframe");
+
+  // Stop video by clearing src
+  iframe.src = "";
+
+  // Hide Modal
+  videoModal.style.display = "none";
+
+  // Restore overflow if movie modal is also closed
+  if (document.getElementById("movie-modal").style.display !== "block") {
+    document.body.style.overflow = "auto";
+  }
 }
 
-function openModal(movie) {
+// Fetch additional data from OMDB
+async function fetchOMDBData(title, year) {
+  try {
+    const response = await fetch(
+      `${OMDB_BASE_URL}?t=${encodeURIComponent(title)}&y=${year}&apikey=${OMDB_API_KEY}`,
+    );
+    const data = await response.json();
+    return data.Response === "True" ? data : null;
+  } catch (error) {
+    console.error("OMDB Error:", error);
+    return null;
+  }
+}
+
+async function openModal(movie) {
   const modal = document.getElementById("movie-modal");
   const modalTitle = document.getElementById("modal-title");
   const modalDate = document.getElementById("modal-date");
@@ -170,14 +188,21 @@ function openModal(movie) {
   const modalHeaderImg = document.getElementById("modal-header-image");
   const playBtn = document.getElementById("modal-play-btn");
 
-  // Populate data
+  // Enriched data placeholders
+  const modalRuntime = document.getElementById("modal-runtime");
+  const modalImdb = document.getElementById("modal-imdb");
+  const modalActors = document.getElementById("modal-actors");
+
+  // Reset enriched fields
+  modalRuntime.innerText = "";
+  modalImdb.style.display = "none";
+  modalActors.innerText = "";
+
+  // Populate basic TMDB data
   modalTitle.innerText = movie.title;
-  modalDate.innerText = movie.release_date
-    ? movie.release_date.split("-")[0]
-    : "N/A";
-  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average.toFixed(
-    1,
-  )} Rating`;
+  const year = movie.release_date ? movie.release_date.split("-")[0] : "";
+  modalDate.innerText = year || "N/A";
+  modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average.toFixed(1)} Rating`;
   modalOverview.innerText = movie.overview || "No description available.";
 
   // Set backdrop image
@@ -190,12 +215,29 @@ function openModal(movie) {
   // Show modal
   modal.style.display = "block";
   document.body.style.overflow = "hidden"; // Prevent background scroll
+
+  // Fetch and apply OMDB data
+  if (year) {
+    const omdbData = await fetchOMDBData(movie.title, year);
+    if (omdbData) {
+      if (omdbData.Runtime && omdbData.Runtime !== "N/A") {
+        modalRuntime.innerText = `| ${omdbData.Runtime}`;
+      }
+      if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
+        modalImdb.innerText = `IMDb ${omdbData.imdbRating}`;
+        modalImdb.style.display = "inline-block";
+      }
+      if (omdbData.Actors && omdbData.Actors !== "N/A") {
+        modalActors.innerText = `Starring: ${omdbData.Actors}`;
+      }
+    }
+  }
 }
 
 function closeModal() {
   const modal = document.getElementById("movie-modal");
   modal.style.display = "none";
-  
+
   // Restore scroll unless video modal is still open
   if (document.getElementById("video-modal").style.display !== "block") {
     document.body.style.overflow = "auto";
