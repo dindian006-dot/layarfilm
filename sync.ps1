@@ -9,7 +9,7 @@ $status = & $git status --porcelain
 if ($status) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     Write-Host "Changes detected. Committing..."
-    & $git commit -m "Auto-sync: $timestamp"
+    & $git commit -m "Auto-sync: $timestamp - Building Netflix Clone"
     
     # Try pushing to main then master if main fails
     Write-Host "Pushing to GitHub..."
