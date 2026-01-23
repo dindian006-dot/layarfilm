@@ -107,6 +107,30 @@
       <p class="copyright">&copy; 1997-2026 LayarFilm, Inc.</p>
     </footer>
 
+    <!-- Movie Detail Modal -->
+    <div id="movie-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <div class="modal-body">
+          <div class="modal-header-image" id="modal-header-image">
+            <div class="modal-fade-bottom"></div>
+          </div>
+          <div class="modal-info">
+            <h2 id="modal-title"></h2>
+            <div class="modal-meta">
+              <span id="modal-date"></span>
+              <span id="modal-rating"></span>
+            </div>
+            <p id="modal-overview"></p>
+            <div class="modal-actions">
+              <button class="btn btn-play"><i class="fas fa-play"></i> Play</button>
+              <button class="btn btn-plus"><i class="fas fa-plus"></i> My List</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="./js/main.js"></script>
   </body>
 </html>
