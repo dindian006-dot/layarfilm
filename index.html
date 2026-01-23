@@ -21,11 +21,11 @@
       <div class="nav-left">
         <h1 class="logo">LAYARFILM</h1>
         <ul class="nav-links">
-          <li><a href="#" class="active">Home</a></li>
+          <li><a href="#" class="active" id="nav-home">Home</a></li>
           <li><a href="#">TV Shows</a></li>
           <li><a href="#">Movies</a></li>
           <li><a href="#">New & Popular</a></li>
-          <li><a href="#">My List</a></li>
+          <li><a href="#" id="nav-mylist">My List</a></li>
         </ul>
       </div>
       <div class="nav-right">
@@ -94,6 +94,16 @@
       </section>
     </div>
 
+    <!-- My List View (Hidden by default) -->
+    <div id="mylist-view" style="display: none; padding-top: 100px; min-height: 80vh;">
+      <section class="movie-section">
+        <h2 class="section-title">My List</h2>
+        <div class="search-results-grid" id="mylist-grid">
+          <!-- Saved movies injected here -->
+        </div>
+      </section>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
       <div class="social-links">
@@ -142,7 +152,7 @@
             <p id="modal-overview"></p>
             <div class="modal-actions">
               <button class="btn btn-play" id="modal-play-btn"><i class="fas fa-play"></i> Play</button>
-              <button class="btn btn-plus"><i class="fas fa-plus"></i> My List</button>
+              <button class="btn btn-plus" id="modal-plus-btn"><i class="fas fa-plus"></i> My List</button>
             </div>
             <p class="legal-disclaimer">This site does not host or stream movies. Trailers provided by TMDB.</p>
           </div>

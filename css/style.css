@@ -581,6 +581,50 @@ body {
   width: 100%;
 }
 
+/* My List Toggle Buttons */
+.list-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 35px;
+  height: 35px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.movie-card:hover .list-btn {
+  opacity: 1;
+}
+
+.list-btn:hover {
+  background: #fff;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.list-btn.active {
+  background: var(--netflix-red);
+  border-color: var(--netflix-red);
+}
+
+.empty-list-msg {
+  text-align: center;
+  font-size: 1.3rem;
+  color: #aaa;
+  grid-column: 1 / -1;
+  padding: 100px 0;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     margin: 0;

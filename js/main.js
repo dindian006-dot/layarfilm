@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   handleNavbarScroll();
   setupModalListeners();
   setupSearch();
+  setupNavigation();
 });
 
 // Initialize Application
@@ -81,8 +82,14 @@ function createMovieCard(movie) {
     ? `${IMAGE_BASE_URL}${movie.poster_path}`
     : "https://via.placeholder.com/500x750?text=No+Image";
 
+  // Check if movie is in My List
+  const inList = isInMyList(movie.id);
+
   movieCard.innerHTML = `
         <img src="${posterPath}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="list-btn ${inList ? "active" : ""}" title="${inList ? "Remove from List" : "Add to My List"}">
+            <i class="fas ${inList ? "fa-check" : "fa-plus"}"></i>
+        </div>
         <div class="card-overlay">
             <div class="card-info">
                 <h3>${movie.title}</h3>
@@ -91,11 +98,120 @@ function createMovieCard(movie) {
         </div>
     `;
 
-  movieCard.addEventListener("click", () => {
+  // Click card to open modal
+  movieCard.addEventListener("click", (e) => {
+    // Don't open modal if clicking the list button
+    if (e.target.closest(".list-btn")) return;
     openModal(movie);
   });
 
+  // Toggle My List
+  const listBtn = movieCard.querySelector(".list-btn");
+  listBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMyList(movie);
+    // Refresh card state
+    const isActive = isInMyList(movie.id);
+    listBtn.classList.toggle("active", isActive);
+    listBtn.querySelector("i").className = `fas ${isActive ? "fa-check" : "fa-plus"}`;
+    listBtn.title = isActive ? "Remove from List" : "Add to My List";
+  });
+
   return movieCard;
+}
+
+// LocalStorage helpers
+function getMyList() {
+  const list = localStorage.getItem("layarfilm_mylist");
+  return list ? JSON.parse(list) : [];
+}
+
+function isInMyList(id) {
+  const list = getMyList();
+  return list.some((m) => m.id === id);
+}
+
+function toggleMyList(movie) {
+  let list = getMyList();
+  const index = list.findIndex((m) => m.id === movie.id);
+
+  if (index > -1) {
+    list.splice(index, 1);
+  } else {
+    // Store only necessary info
+    list.push({
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      vote_average: movie.vote_average,
+      release_date: movie.release_date,
+    });
+  }
+
+  localStorage.setItem("layarfilm_mylist", JSON.stringify(list));
+
+  // If we are currently in "My List" view, re-render it
+  if (document.getElementById("mylist-view").style.display === "block") {
+    renderMyList();
+  }
+}
+
+// Navigation Logic
+function setupNavigation() {
+  const navHome = document.getElementById("nav-home");
+  const navMyList = document.getElementById("nav-mylist");
+
+  navHome.addEventListener("click", (e) => {
+    e.preventDefault();
+    showView("homepage");
+    setActiveLink(navHome);
+  });
+
+  navMyList.addEventListener("click", (e) => {
+    e.preventDefault();
+    showView("mylist");
+    setActiveLink(navMyList);
+    renderMyList();
+  });
+}
+
+function showView(viewName) {
+  const homeContent = document.getElementById("homepage-content");
+  const searchView = document.getElementById("search-view");
+  const mylistView = document.getElementById("mylist-view");
+
+  homeContent.style.display = viewName === "homepage" ? "block" : "none";
+  searchView.style.display = viewName === "search" ? "block" : "none";
+  mylistView.style.display = viewName === "mylist" ? "block" : "none";
+
+  // If returning to home, clear search
+  if (viewName === "homepage") {
+    document.getElementById("search-input").value = "";
+  }
+}
+
+function setActiveLink(activeLink) {
+  document.querySelectorAll(".nav-links a").forEach((link) => {
+    link.classList.remove("active");
+  });
+  activeLink.classList.add("active");
+}
+
+function renderMyList() {
+  const grid = document.getElementById("mylist-grid");
+  const list = getMyList();
+
+  grid.innerHTML = "";
+
+  if (list.length === 0) {
+    grid.innerHTML = '<p class="empty-list-msg">Your list is empty.</p>';
+    return;
+  }
+
+  list.forEach((movie) => {
+    const card = createMovieCard(movie);
+    grid.appendChild(card);
+  });
 }
 
 // Search Logic
@@ -122,19 +238,20 @@ function setupSearch() {
 async function handleSearch(query) {
   const homeContent = document.getElementById("homepage-content");
   const searchView = document.getElementById("search-view");
+  const mylistView = document.getElementById("mylist-view");
   const resultsGrid = document.getElementById("search-results-grid");
   const searchTitle = document.getElementById("search-query-title");
 
   if (!query || query.length === 0) {
-    // Show home content, hide search view
-    homeContent.style.display = "block";
-    searchView.style.display = "none";
+    showView("homepage");
     return;
   }
 
-  // Hide home, show search
+  // Hide others, show search
   homeContent.style.display = "none";
+  mylistView.style.display = "none";
   searchView.style.display = "block";
+
   searchTitle.innerText = `Searching for "${query}"...`;
   resultsGrid.innerHTML = '<div class="loading-results">Loading results...</div>';
 
@@ -264,6 +381,7 @@ async function openModal(movie) {
   const modalOverview = document.getElementById("modal-overview");
   const modalHeaderImg = document.getElementById("modal-header-image");
   const playBtn = document.getElementById("modal-play-btn");
+  const listBtn = document.getElementById("modal-plus-btn");
 
   // Enriched data placeholders
   const modalRuntime = document.getElementById("modal-runtime");
@@ -282,6 +400,9 @@ async function openModal(movie) {
   modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${movie.vote_average? movie.vote_average.toFixed(1) : 'N/A'} Rating`;
   modalOverview.innerText = movie.overview || "No description available.";
 
+  // My List button state in modal
+  refreshModalListBtn(movie);
+
   // Set backdrop image
   const backdropPath = movie.backdrop_path || movie.poster_path;
   if (backdropPath) {
@@ -292,6 +413,16 @@ async function openModal(movie) {
 
   // Update Play Button
   playBtn.onclick = () => playTrailer(movie.id);
+
+  // Update List Button in Modal
+  const modalPlusBtn = document.getElementById("modal-plus-btn");
+  modalPlusBtn.onclick = () => {
+    toggleMyList(movie);
+    refreshModalListBtn(movie);
+    // Also refresh any cards on screen
+    renderMyList();
+    initApp(); // Re-init home rows to update card buttons
+  };
 
   // Show modal
   modal.style.display = "block";
@@ -313,6 +444,17 @@ async function openModal(movie) {
       }
     }
   }
+}
+
+function refreshModalListBtn(movie) {
+    const modalPlusBtn = document.getElementById("modal-plus-btn");
+    const inList = isInMyList(movie.id);
+    modalPlusBtn.innerHTML = `<i class="fas ${inList ? "fa-check" : "fa-plus"}"></i> ${inList ? "In My List" : "My List"}`;
+    if (inList) {
+        modalPlusBtn.style.color = "var(--netflix-red)";
+    } else {
+        modalPlusBtn.style.color = "#fff";
+    }
 }
 
 function closeModal() {
