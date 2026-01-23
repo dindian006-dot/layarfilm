@@ -83,14 +83,20 @@ async function fetchAndRenderMovies(url, containerId) {
 // Modal Logic
 function setupModalListeners() {
   const modal = document.getElementById("movie-modal");
+  const videoModal = document.getElementById("video-modal");
   const closeBtn = document.querySelector(".close-btn");
+  const closeVideoBtn = document.querySelector(".close-video-btn");
 
   closeBtn.addEventListener("click", closeModal);
+  closeVideoBtn.addEventListener("click", closeVideoModal);
 
-  // Close modal when clicking outside content
+  // Close modals when clicking outside content
   window.addEventListener("click", (event) => {
     if (event.target == modal) {
       closeModal();
+    }
+    if (event.target == videoModal) {
+      closeVideoModal();
     }
   });
 
@@ -98,6 +104,7 @@ function setupModalListeners() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeModal();
+      closeVideoModal();
     }
   });
 }
@@ -116,7 +123,7 @@ async function playTrailer(movieId) {
     );
 
     if (trailer) {
-      window.open(`https://www.youtube.com/watch?v=${trailer.key}`, "_blank");
+      openVideoModal(trailer.key);
     } else {
       alert("Trailer not available");
     }
@@ -124,6 +131,34 @@ async function playTrailer(movieId) {
     console.error("Error fetching trailer:", error);
     alert("Error loading trailer");
   }
+}
+
+function openVideoModal(videoKey) {
+    const videoModal = document.getElementById("video-modal");
+    const iframe = document.getElementById("trailer-iframe");
+    
+    // Set YouTube Embed URL with autoplay
+    iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
+    
+    // Show Modal
+    videoModal.style.display = "block";
+    document.body.style.overflow = "hidden";
+}
+
+function closeVideoModal() {
+    const videoModal = document.getElementById("video-modal");
+    const iframe = document.getElementById("trailer-iframe");
+    
+    // Stop video by clearing src
+    iframe.src = "";
+    
+    // Hide Modal
+    videoModal.style.display = "none";
+    
+    // Restore overflow if movie modal is also closed
+    if (document.getElementById("movie-modal").style.display !== "block") {
+        document.body.style.overflow = "auto";
+    }
 }
 
 function openModal(movie) {
@@ -160,7 +195,11 @@ function openModal(movie) {
 function closeModal() {
   const modal = document.getElementById("movie-modal");
   modal.style.display = "none";
-  document.body.style.overflow = "auto"; // Restore scroll
+  
+  // Restore scroll unless video modal is still open
+  if (document.getElementById("video-modal").style.display !== "block") {
+    document.body.style.overflow = "auto";
+  }
 }
 
 // Navbar Scroll Effect
