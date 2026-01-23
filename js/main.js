@@ -1,78 +1,13 @@
-// Movie Data
-const movies = [
-    {
-        id: 1,
-        title: "The Cosmos",
-        image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=400&q=80",
-        category: "popular"
-    },
-    {
-        id: 2,
-        title: "Deep Sea",
-        image: "https://images.unsplash.com/photo-1551244072-5d12893278ab?auto=format&fit=crop&w=400&q=80",
-        category: "popular"
-    },
-    {
-        id: 3,
-        title: "Cyber City",
-        image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=400&q=80",
-        category: "popular"
-    },
-    {
-        id: 4,
-        title: "Infinite",
-        image: "https://images.unsplash.com/photo-1464802686167-b939a6910659?auto=format&fit=crop&w=400&q=80",
-        category: "popular"
-    },
-    {
-        id: 5,
-        title: "Wild Life",
-        image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=400&q=80",
-        category: "trending"
-    },
-    {
-        id: 6,
-        title: "Mountain Peak",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80",
-        category: "trending"
-    },
-    {
-        id: 7,
-        title: "Night Sky",
-        image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80",
-        category: "trending"
-    },
-    {
-        id: 8,
-        title: "Ocean Wave",
-        image: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=400&q=80",
-        category: "trending"
-    },
-    {
-        id: 9,
-        title: "The Master",
-        image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400&q=80",
-        category: "top-rated"
-    },
-    {
-        id: 10,
-        title: "Inception",
-        image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=400&q=80",
-        category: "top-rated"
-    },
-    {
-        id: 11,
-        title: "The Knight",
-        image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80",
-        category: "top-rated"
-    },
-    {
-        id: 12,
-        title: "Legacy",
-        image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80",
-        category: "top-rated"
-    }
-];
+// TMDB API Configuration
+const API_KEY = '09c18febc78292d701e642d976b60d0c';
+const BASE_URL = 'https://api.themoviedb.org/3';
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500/';
+
+// Endpoints
+const ENDPOINTS = {
+    trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
+    popular: `${BASE_URL}/movie/popular?api_key=${API_KEY}`
+};
 
 // Wait for DOM to Load
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,30 +16,63 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Initialize Application
-function initApp() {
-    renderMovies('popular', 'popular-row');
-    renderMovies('trending', 'trending-row');
-    renderMovies('top-rated', 'top-rated-row');
+async function initApp() {
+    // Fetch and render Trending Movies (for Continue Watching)
+    await fetchAndRenderMovies(ENDPOINTS.trending, 'trending-row');
+    
+    // Fetch and render Popular Movies (for Trending Now)
+    await fetchAndRenderMovies(ENDPOINTS.popular, 'popular-row');
 }
 
-// Render Movie Card
-function renderMovies(category, containerId) {
+// Fetch and Render Movies from TMDB
+async function fetchAndRenderMovies(url, containerId) {
     const container = document.getElementById(containerId);
-    const filteredMovies = movies.filter(movie => movie.category === category);
-
-    filteredMovies.forEach(movie => {
-        const movieCard = document.createElement('div');
-        movieCard.className = 'movie-card';
-        movieCard.innerHTML = `
-            <img src="${movie.image}" alt="${movie.title}">
-        `;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
         
-        movieCard.addEventListener('click', () => {
-            alert(`Opening ${movie.title}...`);
-        });
+        const data = await response.json();
+        const movies = data.results;
 
-        container.appendChild(movieCard);
-    });
+        if (!movies || movies.length === 0) {
+            container.innerHTML = '<p class="error-msg">No movies found.</p>';
+            return;
+        }
+
+        // Clear container before rendering
+        container.innerHTML = '';
+
+        movies.forEach(movie => {
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            
+            // Format date and rating
+            const releaseDate = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+            const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+            
+            movieCard.innerHTML = `
+                <img src="${IMAGE_BASE_URL}${movie.poster_path}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+                <div class="card-overlay">
+                    <div class="card-info">
+                        <h3>${movie.title}</h3>
+                        <p>${releaseDate} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
+                    </div>
+                </div>
+            `;
+            
+            movieCard.addEventListener('click', () => {
+                alert(`Viewing details for: ${movie.title}\nRelease: ${releaseDate}\nRating: ${rating}`);
+            });
+
+            container.appendChild(movieCard);
+        });
+    } catch (error) {
+        console.error('Error loading movies:', error);
+        container.innerHTML = '<p class="error-msg">Failed to load movies. Please check your connection or API key.</p>';
+    }
 }
 
 // Navbar Scroll Effect
