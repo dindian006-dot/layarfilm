@@ -8,18 +8,21 @@ const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/original/";
 const OMDB_API_KEY = "e5ef6fb7";
 const OMDB_BASE_URL = "https://www.omdbapi.com/";
 
+// Watchmode API Configuration
+const WATCHMODE_API_KEY = "1QNJ91Fjl4RB1BGAqZuo03WAqGwjpJvZZWkgcEUW";
+const WATCHMODE_BASE_URL = "https://api.watchmode.com/v1";
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
   popular: `${BASE_URL}/movie/popular?api_key=${API_KEY}`,
-  search: `${BASE_URL}/search/multi?api_key=${API_KEY}`, // Changed to multi search
+  search: `${BASE_URL}/search/multi?api_key=${API_KEY}`,
   tvTrending: `${BASE_URL}/trending/tv/week?api_key=${API_KEY}`,
   tvPopular: `${BASE_URL}/tv/popular?api_key=${API_KEY}`,
 };
 
 // Global State
 let searchTimeout = null;
-// Track loaded content to avoid re-fetching
 const loadedContent = {
     movies: false,
     tv: false
@@ -77,11 +80,9 @@ async function fetchAndRenderContent(url, containerId, type) {
       return;
     }
 
-    // Clear container before rendering
     container.innerHTML = "";
 
     results.forEach((item) => {
-      // For multi-search or mixed content, fallback to passed type if available
       const mediaType = item.media_type || type; 
       const card = createContentCard(item, mediaType);
       container.appendChild(card);
@@ -98,7 +99,6 @@ function createContentCard(item, type) {
   const card = document.createElement("div");
   card.className = "movie-card";
 
-  // Normalize data fields
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date;
   const year = date ? date.split("-")[0] : "N/A";
@@ -107,7 +107,6 @@ function createContentCard(item, type) {
     ? `${IMAGE_BASE_URL}${item.poster_path}`
     : "https://via.placeholder.com/500x750?text=No+Image";
 
-  // Check if item is in My List
   const inList = isInMyList(item.id);
 
   card.innerHTML = `
@@ -123,19 +122,15 @@ function createContentCard(item, type) {
         </div>
     `;
 
-  // Click card to open modal
   card.addEventListener("click", (e) => {
-    // Don't open modal if clicking the list button
     if (e.target.closest(".list-btn")) return;
     openModal(item, type);
   });
 
-  // Toggle My List
   const listBtn = card.querySelector(".list-btn");
   listBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     toggleMyList(item, type);
-    // Refresh card state
     const isActive = isInMyList(item.id);
     listBtn.classList.toggle("active", isActive);
     listBtn.querySelector("i").className = `fas ${isActive ? "fa-check" : "fa-plus"}`;
@@ -163,20 +158,18 @@ function toggleMyList(item, type) {
   if (index > -1) {
     list.splice(index, 1);
   } else {
-    // Normalize and Store necessary info
     list.push({
       id: item.id,
       title: item.title || item.name,
       poster_path: item.poster_path,
       vote_average: item.vote_average,
       release_date: item.release_date || item.first_air_date,
-      type: type // Store type to open correct modal later
+      type: type 
     });
   }
 
   localStorage.setItem("layarfilm_mylist", JSON.stringify(list));
 
-  // If we are currently in "My List" view, re-render it
   if (document.getElementById("mylist-view").style.display === "block") {
     renderMyList();
   }
@@ -198,7 +191,7 @@ function setupNavigation() {
       e.preventDefault();
       showView("tv");
       setActiveLink(navTv);
-      initTVApp(); // Load TV content if not loaded
+      initTVApp();
   });
 
   navMyList.addEventListener("click", (e) => {
@@ -220,7 +213,6 @@ function showView(viewName) {
   searchView.style.display = viewName === "search" ? "block" : "none";
   mylistView.style.display = viewName === "mylist" ? "block" : "none";
 
-  // If returning to home/tv, clear search
   if (viewName === "homepage" || viewName === "tv") {
     document.getElementById("search-input").value = "";
   }
@@ -245,7 +237,7 @@ function renderMyList() {
   }
 
   list.forEach((item) => {
-    const card = createContentCard(item, item.type || 'movie'); // Default to movie if type missing
+    const card = createContentCard(item, item.type || 'movie');
     grid.appendChild(card);
   });
 }
@@ -262,7 +254,6 @@ function setupSearch() {
   searchInput.addEventListener("input", (e) => {
     const query = e.target.value.trim();
 
-    // Debounce search
     if (searchTimeout) clearTimeout(searchTimeout);
 
     searchTimeout = setTimeout(() => {
@@ -280,11 +271,10 @@ async function handleSearch(query) {
   const searchTitle = document.getElementById("search-query-title");
 
   if (!query || query.length === 0) {
-    showView("homepage"); // Default back to homepage
+    showView("homepage");
     return;
   }
 
-  // Hide others, show search
   homeContent.style.display = "none";
   tvContent.style.display = "none";
   mylistView.style.display = "none";
@@ -328,7 +318,6 @@ function setupModalListeners() {
   closeBtn.addEventListener("click", closeModal);
   closeVideoBtn.addEventListener("click", closeVideoModal);
 
-  // Close modals when clicking outside content
   window.addEventListener("click", (event) => {
     if (event.target == modal) {
       closeModal();
@@ -338,7 +327,6 @@ function setupModalListeners() {
     }
   });
 
-  // Close with Escape key
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeModal();
@@ -356,7 +344,6 @@ async function playTrailer(id, type) {
     const data = await response.json();
     const videos = data.results;
 
-    // Find official trailer on YouTube
     const trailer = videos.find(
       (v) => (v.type === "Trailer" || v.type === "Teaser") && v.site === "YouTube",
     );
@@ -376,10 +363,8 @@ function openVideoModal(videoKey) {
   const videoModal = document.getElementById("video-modal");
   const iframe = document.getElementById("trailer-iframe");
 
-  // Set YouTube Embed URL with autoplay
   iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
 
-  // Show Modal
   videoModal.style.display = "block";
   document.body.style.overflow = "hidden";
 }
@@ -388,16 +373,96 @@ function closeVideoModal() {
   const videoModal = document.getElementById("video-modal");
   const iframe = document.getElementById("trailer-iframe");
 
-  // Stop video by clearing src
   iframe.src = "";
-
-  // Hide Modal
   videoModal.style.display = "none";
 
-  // Restore overflow if movie modal is also closed
   if (document.getElementById("movie-modal").style.display !== "block") {
     document.body.style.overflow = "auto";
   }
+}
+
+// Watchmode Fetch Logic
+async function fetchWatchmodeData(title, type) {
+    const container = document.getElementById("watchmode-sources");
+    const section = document.getElementById("modal-watchmode-section");
+    
+    // Reset previous data
+    container.innerHTML = '<p style="color:#aaa; font-style:italic;">Checking availability...</p>';
+    section.style.display = "block";
+    
+    try {
+        // Step 1: Search for title to get Watchmode ID
+        const searchType = type === 'tv' ? 'tv' : 'movie';
+        const searchRes = await fetch(`${WATCHMODE_BASE_URL}/search/?apiKey=${WATCHMODE_API_KEY}&search_field=name&search_value=${encodeURIComponent(title)}&types=${searchType}`);
+        const searchData = await searchRes.json();
+        
+        if (!searchData.title_results || searchData.title_results.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;">Not available for streaming</p>';
+            return;
+        }
+        
+        // Find best match (simple logic: first result)
+        const bestMatch = searchData.title_results[0];
+        
+        // Step 2: Get Sources
+        const sourcesRes = await fetch(`${WATCHMODE_BASE_URL}/title/${bestMatch.id}/sources/?apiKey=${WATCHMODE_API_KEY}&regions=US`);
+        const sourcesData = await sourcesRes.json();
+        
+        if (!sourcesData || sourcesData.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;">Not available for streaming</p>';
+            return;
+        }
+
+        // Filter and Deduplicate Sources (Prioritize Subscription and Free)
+        const uniqueSources = [];
+        const seen = new Set();
+        
+        sourcesData.forEach(source => {
+            if (seen.has(source.source_id)) return;
+            // Only show Subscription (sub) or Free services
+            if (source.type === 'sub' || source.type === 'free') {
+                uniqueSources.push(source);
+                seen.add(source.source_id);
+            }
+        });
+
+        if (uniqueSources.length === 0) {
+             container.innerHTML = '<p style="color:#aaa;">No subscription streaming found. (Rent/Buy available)</p>';
+             return;
+        }
+
+        // Render Sources
+        container.innerHTML = "";
+        
+        // Limit to top 5 sources to avoid clutter
+        uniqueSources.slice(0, 5).forEach(source => {
+            const link = document.createElement("a");
+            link.href = source.web_url;
+            link.target = "_blank";
+            link.className = "streaming-link";
+            
+            // Use a generic placeholder if logo fails, but Watchmode usually provides valid URLs if you map them manually. 
+            // Note: Watchmode API actually returns specific source fields. We will try to rely on their data or text if logo is missing.
+            // Since we don't have a reliable logo map, we will use text labels and try to find a logo if possible or just style it nicely.
+            // Actually Watchmode doesn't return logo URLs in the source endpoint directly without expansion. 
+            // We'll stick to text names for reliability unless we had a logo map.
+            // Wait, implementation plan mentioned logos. Let's try to simulate or use text.
+            // Let's use simple text for now to ensure it works, maybe add a generic icon.
+            
+            // Correction: Better UX is to use simple text if no logo.
+            
+            link.innerHTML = `
+                <span class="streaming-name">${source.name}</span>
+                <span class="streaming-type">${source.type === 'free' ? 'FREE' : ''}</span>
+            `;
+            
+            container.appendChild(link);
+        });
+
+    } catch (error) {
+        console.error("Watchmode Error", error);
+        container.innerHTML = '<p style="color:#aaa;">Unable to load streaming info</p>';
+    }
 }
 
 // Fetch additional data from OMDB
@@ -415,7 +480,6 @@ async function fetchOMDBData(title, year, type) {
   }
 }
 
-// Fetch TV specific details (Seasons/Episodes)
 async function fetchTVDetails(id) {
     try {
         const response = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}`);
@@ -436,30 +500,31 @@ async function openModal(item, type) {
   const modalHeaderImg = document.getElementById("modal-header-image");
   const playBtn = document.getElementById("modal-play-btn");
 
-  // Enriched data placeholders
   const modalRuntime = document.getElementById("modal-runtime");
   const modalImdb = document.getElementById("modal-imdb");
   const modalActors = document.getElementById("modal-actors");
+  
+  // Watchmode Section
+  const watchmodeSection = document.getElementById("modal-watchmode-section");
+  const watchmodeSources = document.getElementById("watchmode-sources");
 
-  // Reset enriched fields
   modalRuntime.innerText = "";
   modalImdb.style.display = "none";
   modalActors.innerText = "";
+  watchmodeSection.style.display = "none"; // Hide initially
+  watchmodeSources.innerHTML = "";
   
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date;
   const year = date ? date.split("-")[0] : "";
 
-  // Populate basic data
   modalTitle.innerText = title;
   modalDate.innerText = year || "N/A";
   modalRating.innerHTML = `<i class="fas fa-star" style="color: gold;"></i> ${item.vote_average? item.vote_average.toFixed(1) : 'N/A'} Rating`;
   modalOverview.innerText = item.overview || "No description available.";
 
-  // My List button state in modal
   refreshModalListBtn(item, type);
 
-  // Set backdrop image
   const backdropPath = item.backdrop_path || item.poster_path;
   if (backdropPath) {
       modalHeaderImg.style.backgroundImage = `url(${BACKDROP_BASE_URL}${backdropPath})`;
@@ -467,27 +532,18 @@ async function openModal(item, type) {
       modalHeaderImg.style.background = "#111";
   }
 
-  // Update Play Button
   playBtn.onclick = () => playTrailer(item.id, type);
 
-  // Update List Button in Modal
   const modalPlusBtn = document.getElementById("modal-plus-btn");
   modalPlusBtn.onclick = () => {
     toggleMyList(item, type);
     refreshModalListBtn(item, type);
-    // Also refresh any cards on screen
     renderMyList();
-    // Update active view content if needed
-    if(document.getElementById("homepage-content").style.display === "block"){
-        // Could re-init but might be heavy. Buttons usually update via CSS classes if IDs match.
-    }
   };
 
-  // Show modal
   modal.style.display = "block";
-  document.body.style.overflow = "hidden"; // Prevent background scroll
+  document.body.style.overflow = "hidden";
 
-  // Special TV Data Fetching (Seasons/Episodes)
   if (type === 'tv') {
       const tvDetails = await fetchTVDetails(item.id);
       if (tvDetails) {
@@ -495,7 +551,6 @@ async function openModal(item, type) {
       }
   }
 
-  // Fetch and apply OMDB data
   if (year) {
     const omdbData = await fetchOMDBData(title, year, type);
     if (omdbData) {
@@ -511,6 +566,9 @@ async function openModal(item, type) {
       }
     }
   }
+  
+  // Call Watchmode API
+  fetchWatchmodeData(title, type);
 }
 
 function refreshModalListBtn(item, type) {
@@ -528,13 +586,11 @@ function closeModal() {
   const modal = document.getElementById("movie-modal");
   modal.style.display = "none";
 
-  // Restore scroll unless video modal is still open
   if (document.getElementById("video-modal").style.display !== "block") {
     document.body.style.overflow = "auto";
   }
 }
 
-// Navbar Scroll Effect
 function handleNavbarScroll() {
   const navbar = document.getElementById("navbar");
   window.addEventListener("scroll", () => {

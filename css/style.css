@@ -625,6 +625,62 @@ body {
   padding: 100px 0;
 }
 
+/* Watchmode Styles */
+.watchmode-section {
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
+}
+
+.watchmode-title {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+
+.watchmode-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.streaming-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.streaming-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.streaming-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.streaming-name {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.streaming-type {
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-left: 5px;
+  text-transform: uppercase;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     margin: 0;
