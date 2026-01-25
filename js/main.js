@@ -97,9 +97,6 @@ async function initTVApp() {
     // Fetch and render Popular TV
     await fetchAndRenderContent(ENDPOINTS.tvPopular, "tv-popular-row", "tv");
 
-    // Populate TV Filters
-    await populateFilters('tv');
-
     loadedContent.tv = true;
 }
 
@@ -759,10 +756,6 @@ function setupFilters() {
     // Desktop Clear Filter (changed ID to movie-clear-filters-btn)
     const clearBtn = document.getElementById("movie-clear-filters-btn");
     if (clearBtn) clearBtn.onclick = () => clearFilters('movie');
-
-    // TV Clear Filter
-    const tvClearBtn = document.getElementById("tv-clear-filters-btn");
-    if (tvClearBtn) tvClearBtn.onclick = () => clearFilters('tv');
 }
 
 function toggleDropdown(id) {
@@ -784,7 +777,8 @@ async function populateFilters(type) {
         const data = await response.json();
         const genres = data.genres;
         
-        const container = document.getElementById(type === 'movie' ? 'movie-genre-list' : 'tv-genre-list');
+        const containerId = type === 'movie' ? 'movie-genre-list' : 'tv-genre-list';
+        const container = document.getElementById(containerId);
         if (container) {
             container.innerHTML = "";
             genres.forEach(genre => {
@@ -801,7 +795,8 @@ async function populateFilters(type) {
     }
 
     // Populate Countries
-    const cContainer = document.getElementById(type === 'movie' ? 'movie-country-list' : 'tv-country-list');
+    const cContainerId = type === 'movie' ? 'movie-country-list' : 'tv-country-list';
+    const cContainer = document.getElementById(cContainerId);
     if (cContainer) {
         cContainer.innerHTML = "";
         COUNTRIES.forEach(country => {
@@ -845,8 +840,11 @@ function setCountryFilter(type, code, element, name) {
 
     // Update button text
     const groupID = type === 'movie' ? 'movie-country-filter-group' : 'tv-country-filter-group';
-    const btn = document.getElementById(groupID).querySelector('.filter-btn');
-    btn.innerHTML = `${activeFilters[type].country ? name : 'Country'} <i class="fas fa-chevron-down"></i>`;
+    const groupElement = document.getElementById(groupID);
+    if (groupElement) {
+        const btn = groupElement.querySelector('.filter-btn');
+        btn.innerHTML = `${activeFilters[type].country ? name : 'Country'} <i class="fas fa-chevron-down"></i>`;
+    }
 
     updateFilteredResults(type);
 }
@@ -855,10 +853,12 @@ async function updateFilteredResults(type) {
     const filters = activeFilters[type];
     const hasFilters = filters.genres.length > 0 || filters.country !== '';
     
-    const clearBtn = document.getElementById(type === 'movie' ? 'movie-clear-filters-btn' : 'tv-clear-filters-btn');
+    const clearBtnId = type === 'movie' ? 'movie-clear-filters-btn' : 'tv-clear-filters-btn';
+    const clearBtn = document.getElementById(clearBtnId);
     if (clearBtn) clearBtn.style.display = hasFilters ? 'block' : 'none';
 
-    const mainContainer = document.querySelector(type === 'movie' ? '#movies-view .main-container' : '#tv-shows-view .main-container');
+    const containerId = type === 'movie' ? '#movies-view .main-container' : '#tv-shows-view .main-container';
+    const mainContainer = document.querySelector(containerId);
     if (!mainContainer) return;
 
     if (!hasFilters) {
@@ -934,6 +934,7 @@ function clearFilters(type) {
     
     const viewId = type === 'movie' ? 'movies-view' : 'tv-shows-view';
     const container = document.getElementById(viewId);
+    if (!container) return;
     
     container.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
     
@@ -941,8 +942,11 @@ function clearFilters(type) {
     if (clearBtn) clearBtn.style.display = 'none';
     
     const groupID = type === 'movie' ? 'movie-country-filter-group' : 'tv-country-filter-group';
-    const btn = document.getElementById(groupID).querySelector('.filter-btn');
-    btn.innerHTML = `Country <i class="fas fa-chevron-down"></i>`;
+    const groupElement = document.getElementById(groupID);
+    if (groupElement) {
+        const btn = groupElement.querySelector('.filter-btn');
+        btn.innerHTML = `Country <i class="fas fa-chevron-down"></i>`;
+    }
 
     const mainContainer = container.querySelector('.main-container');
     const filterSection = mainContainer.querySelector('.filtered-results-section');
