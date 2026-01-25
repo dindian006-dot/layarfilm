@@ -1392,8 +1392,9 @@ async function fetchRecentlyAvailable() {
     
     grid.innerHTML = '<div class="loading-results">Loading streaming data...</div>';
 
-    // Use simplified V2 query to minimize errors
-    const url = `https://${RAPID_API_HOST}/v2/shows/search/filters?country=us&show_type=movie&order_by=popularity_1month&catalogs=netflix,prime,disney,hbo,hulu,peacock,paramount,starz,showtime,apple,mubi&limit=30`;
+    // Use /changes endpoint instead - simpler and more reliable
+    // Get shows that were added in the last 7 days
+    const url = `https://${RAPID_API_HOST}/changes?change_type=new&item_type=show&show_type=movie&country=us&catalogs=netflix,prime,disney,hbo,hulu&limit=30`;
     
     console.log("📡 Request URL:", url);
     
@@ -1426,9 +1427,14 @@ async function fetchRecentlyAvailable() {
 
         const result = await response.json();
         console.log("✅ Response received:", result);
-        console.log("🎬 Movies count:", result.shows ? result.shows.length : 0);
         
-        const movies = result.shows || [];
+        // Extract shows from changes response
+        const changes = result.changes || [];
+        console.log("🔄 Changes count:", changes.length);
+        
+        // Get unique shows from changes
+        const movies = changes.map(change => change.show).filter(show => show);
+        console.log("🎬 Movies count:", movies.length);
 
         // Save to Cache
         localStorage.setItem(cacheKey, JSON.stringify({
