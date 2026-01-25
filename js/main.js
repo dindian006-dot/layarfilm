@@ -12,6 +12,9 @@ const OMDB_BASE_URL = "https://www.omdbapi.com/";
 const WATCHMODE_API_KEY = "1QNJ91Fjl4RB1BGAqZuo03WAqGwjpJvZZWkgcEUW";
 const WATCHMODE_BASE_URL = "https://api.watchmode.com/v1";
 
+// Jikan API (MAL) Configuration
+const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -1064,6 +1067,11 @@ async function initAnimeApp() {
     // Fetch and render Anime rows
     await fetchAndRenderAnime('trending', 'anime-trending-row');
     await fetchAndRenderAnime('popular', 'anime-popular-row');
+    
+    // Fetch and render Jikan (MAL) rows
+    await fetchAndRenderJikan('seasonal', 'anime-seasonal-row');
+    await fetchAndRenderJikan('top', 'anime-top-row');
+
     await fetchAndRenderAnime('new', 'anime-new-row');
 
     loadedContent.anime = true;
@@ -1126,5 +1134,86 @@ async function fetchAndRenderAnime(category, containerId) {
     } catch (error) {
         console.error(`Error loading ${category} anime:`, error);
         container.innerHTML = '<p class="error-msg">Error loading content.</p>';
+    }
+}
+
+async function fetchAndRenderJikan(category, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '<div class="skeleton-container" style="display:flex; gap:20px;">' + Array(6).fill('<div class="movie-card skeleton" style="height:250px; width:160px; flex-shrink:0;"></div>').join('') + '</div>';
+
+    let url = category === 'seasonal' ? `${JIKAN_BASE_URL}/seasons/now` : `${JIKAN_BASE_URL}/top/anime`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const results = data.data || [];
+
+        container.innerHTML = "";
+        
+        if (results.length === 0) {
+            container.innerHTML = '<p class="empty-list-msg">No results from MAL.</p>';
+            return;
+        }
+
+        results.slice(0, 15).forEach(item => {
+            const card = createJikanCard(item);
+            container.appendChild(card);
+        });
+    } catch (error) {
+        console.error(`Jikan ${category} error:`, error);
+        container.innerHTML = '<p class="error-msg">Failed to load MyAnimeList data.</p>';
+    }
+}
+
+function createJikanCard(item) {
+    const card = document.createElement("div");
+    card.className = "movie-card";
+
+    const title = item.title_english || item.title;
+    const rating = item.score || "N/A";
+    const year = item.year || (item.aired && item.aired.prop && item.aired.prop.from.year) || "N/A";
+    const posterPath = item.images && item.images.jpg && item.images.jpg.image_url;
+
+    card.innerHTML = `
+        <img src="${posterPath}" alt="${title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="card-overlay">
+            <div class="card-info">
+                <h3>${title}</h3>
+                <p>${year} | <i class="fas fa-star" style="color: gold;"></i> ${rating}</p>
+            </div>
+        </div>
+        <div class="mal-badge" style="position:absolute; top:10px; left:10px; background:rgba(0,0,255,0.7); color:#fff; padding:2px 5px; border-radius:3px; font-size:10px; font-weight:bold;">MAL</div>
+    `;
+
+    card.addEventListener("click", () => {
+        handleJikanClick(item);
+    });
+
+    return card;
+}
+
+async function handleJikanClick(item) {
+    const title = item.title_english || item.title;
+    console.log(`Bridging Jikan title to TMDB: ${title}`);
+    
+    // Show a small "Locating content..." toast if possible, or just wait
+    // Search TMDB
+    try {
+        const query = encodeURIComponent(title);
+        const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${query}`);
+        const data = await res.json();
+        
+        // Find best match in animation genre
+        const match = data.results.find(res => {
+            return (res.genre_ids && res.genre_ids.includes(16)) || (res.media_type === 'tv' || res.media_type === 'movie');
+        }) || data.results[0];
+
+        if (match) {
+            openModal(match, match.media_type);
+        } else {
+            alert(`Sorry, we couldn't find matching streaming sources for "${title}" in our database.`);
+        }
+    } catch (error) {
+        console.error("Bridge search error:", error);
     }
 }
