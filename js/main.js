@@ -20,7 +20,7 @@ const GOGO_API_URL = "https://anbuanime.onrender.com";
 
 // LK21 API Configuration (Anabot)
 const LK21_API_URL = "https://anabot.my.id/api";
-const LK21_API_KEY = "freeApikey";
+const LK21_API_KEY = "zVr6RiOFme";
 
 // Endpoints
 const ENDPOINTS = {
