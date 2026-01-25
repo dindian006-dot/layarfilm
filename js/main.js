@@ -31,7 +31,8 @@ let searchTimeout = null;
 const loadedContent = {
     movies: false,
     tv: false,
-    anime: false
+    anime: false,
+    animeCollections: false
 };
 let activeFilters = {
     movie: { genres: [], country: '' },
@@ -1259,35 +1260,58 @@ async function fetchAnimeUpcoming() {
 }
 
 async function fetchAnimeCollections() {
-    // Only load if empty
-    if (document.getElementById("anime-ona-row").children.length > 0) return;
+    // Only load if not already loaded
+    if (loadedContent.animeCollections) return;
 
     // Endpoints provided by user
     const collectionMap = [
-        { id: 'anime-ona-row', url: `${JIKAN_BASE_URL}/top/anime?type=ona` },
-        { id: 'anime-movies-row', url: `${JIKAN_BASE_URL}/top/anime?type=movie` },
-        { id: 'anime-bleach-row', url: `${JIKAN_BASE_URL}/anime?q=bleach&sfw` },
-        { id: 'anime-evangelion-row', url: `${JIKAN_BASE_URL}/anime?q=%E6%96%B0%E4%B8%96%E7%B4%80&sfw` },
-        { id: 'anime-2012-row', url: `${JIKAN_BASE_URL}/seasons/2012/spring?sfw` }
+        { id: 'anime-ona-row', url: `${JIKAN_BASE_URL}/top/anime?type=ona`, name: 'ONA' },
+        { id: 'anime-movies-row', url: `${JIKAN_BASE_URL}/top/anime?type=movie`, name: 'Movies' },
+        { id: 'anime-bleach-row', url: `${JIKAN_BASE_URL}/anime?q=bleach&sfw`, name: 'Bleach' },
+        { id: 'anime-evangelion-row', url: `${JIKAN_BASE_URL}/anime?q=%E6%96%B0%E4%B8%96%E7%B4%80&sfw`, name: 'Evangelion' },
+        { id: 'anime-2012-row', url: `${JIKAN_BASE_URL}/seasons/2012/spring?sfw`, name: 'Spring 2012' }
     ];
 
-    collectionMap.forEach(async (collection) => {
+    // Mark as starting to load
+    loadedContent.animeCollections = true;
+
+    // Fetch sequentially to respect Jikan rate limits (2 req/s)
+    for (const collection of collectionMap) {
         const row = document.getElementById(collection.id);
+        if (!row) continue;
+        
         row.innerHTML = '<div class="skeleton-container" style="display:flex; gap:20px;">' + Array(6).fill('<div class="movie-card skeleton" style="height:250px; width:160px; flex-shrink:0;"></div>').join('') + '</div>';
         
         try {
             const response = await fetch(collection.url);
-            const data = await response.json();
+            if (response.status === 429) {
+                console.warn(`Rate limited for ${collection.name}, retrying in 1s...`);
+                await new Promise(r => setTimeout(r, 1000));
+                // One retry
+                const retryRes = await fetch(collection.url);
+                var data = await retryRes.json();
+            } else {
+                var data = await response.json();
+            }
+            
             const results = data.data || [];
 
             row.innerHTML = "";
-            results.slice(0, 15).forEach(item => {
-                const card = createJikanCard(item);
-                row.appendChild(card);
-            });
+            if (results.length === 0) {
+                row.innerHTML = '<p class="empty-list-msg">No results found for this collection.</p>';
+            } else {
+                results.slice(0, 15).forEach(item => {
+                    const card = createJikanCard(item);
+                    row.appendChild(card);
+                });
+            }
+            
+            // Small delay between requests to be safe
+            await new Promise(r => setTimeout(r, 500));
+            
         } catch (error) {
             console.error(`Collection ${collection.id} error:`, error);
-            row.innerHTML = '<p class="error-msg">Failed to load collection.</p>';
+            row.innerHTML = '<p class="error-msg">Failed to load collection. API rate limit may have been reached.</p>';
         }
-    });
+    }
 }
