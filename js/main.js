@@ -514,6 +514,12 @@ async function openModal(item, type) {
   watchmodeSection.style.display = "none"; // Hide initially
   watchmodeSources.innerHTML = "";
   
+  // Recommendations Section
+  const recSection = document.getElementById("modal-recommendations-section");
+  const recGrid = document.getElementById("recommendations-grid");
+  recSection.style.display = "none";
+  recGrid.innerHTML = "";
+  
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date;
   const year = date ? date.split("-")[0] : "";
@@ -572,6 +578,11 @@ async function openModal(item, type) {
   
   // Call Watchmode API
   fetchWatchmodeData(title, type);
+
+  // Call Recommendations API
+  showRecommendationsSkeleton();
+  const recommendations = await fetchSimilarContent(item.id, type);
+  renderRecommendations(recommendations, type);
 }
 
 function refreshModalListBtn(item, type) {
@@ -619,4 +630,72 @@ function playFullMovie(id, type, season = 1, episode = 1) {
 
     iframe.src = embedUrl;
     videoModal.style.display = "block";
+}
+
+async function fetchSimilarContent(id, type) {
+    try {
+        const response = await fetch(`${BASE_URL}/${type}/${id}/similar?api_key=${API_KEY}`);
+        const data = await response.json();
+        return data.results || [];
+    } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        return [];
+    }
+}
+
+function showRecommendationsSkeleton() {
+    const grid = document.getElementById("recommendations-grid");
+    const section = document.getElementById("modal-recommendations-section");
+    
+    grid.innerHTML = "";
+    section.style.display = "block";
+
+    for (let i = 0; i < 6; i++) {
+        const skeleton = document.createElement("div");
+        skeleton.className = "recommendation-card skeleton";
+        skeleton.style.height = "195px"; // Approximate height of a card
+        grid.appendChild(skeleton);
+    }
+}
+
+function renderRecommendations(items, type) {
+    const grid = document.getElementById("recommendations-grid");
+    const section = document.getElementById("modal-recommendations-section");
+    
+    if (!items || items.length === 0) {
+        grid.innerHTML = '<p class="empty-list-msg" style="padding: 20px 0;">No recommendations available</p>';
+        section.style.display = "block";
+        return;
+    }
+
+    grid.innerHTML = "";
+    section.style.display = "block";
+
+    items.slice(0, 10).forEach(item => {
+        const card = document.createElement("div");
+        card.className = "recommendation-card";
+        
+        const title = item.title || item.name;
+        const posterPath = item.poster_path 
+            ? `${IMAGE_BASE_URL}${item.poster_path}` 
+            : "https://via.placeholder.com/500x750?text=No+Image";
+        const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
+
+        card.innerHTML = `
+            <img src="${posterPath}" alt="${title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+            <div class="recommendation-info">
+                <h4>${title}</h4>
+                <p><i class="fas fa-star star-icon"></i> ${rating}</p>
+            </div>
+        `;
+
+        card.onclick = () => {
+            // Smoothly transition to new modal content
+            openModal(item, type);
+            // Scroll modal to top
+            document.querySelector(".modal-content").scrollTop = 0;
+        };
+
+        grid.appendChild(card);
+    });
 }
