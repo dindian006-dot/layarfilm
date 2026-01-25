@@ -27,6 +27,24 @@ const loadedContent = {
     movies: false,
     tv: false
 };
+let activeFilters = {
+    movie: { genres: [], country: '' },
+    tv: { genres: [], country: '' }
+};
+const COUNTRIES = [
+    { code: 'US', name: 'United States' },
+    { code: 'ID', name: 'Indonesia' },
+    { code: 'KR', name: 'South Korea' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'FR', name: 'France' },
+    { code: 'IN', name: 'India' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'CN', name: 'China' },
+    { code: 'TH', name: 'Thailand' },
+    { code: 'TR', name: 'Turkey' }
+];
 
 // Wait for DOM to Load
 document.addEventListener("DOMContentLoaded", () => {
@@ -35,6 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
   setupModalListeners();
   setupSearch();
   setupNavigation();
+  setupFilters();
+  
+  // Close dropdowns when clicking outside
+  window.onclick = (event) => {
+    if (!event.target.matches('.filter-btn') && !event.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
+    }
+  };
 });
 
 // Initialize Application
@@ -47,6 +73,9 @@ async function initApp() {
   // Fetch and render Popular Movies (for Trending Now)
   await fetchAndRenderContent(ENDPOINTS.popular, "popular-row", "movie");
   
+  // Populate Home Filters
+  await populateFilters('movie');
+  
   loadedContent.movies = true;
 }
 
@@ -58,6 +87,9 @@ async function initTVApp() {
 
     // Fetch and render Popular TV
     await fetchAndRenderContent(ENDPOINTS.tvPopular, "tv-popular-row", "tv");
+
+    // Populate TV Filters
+    await populateFilters('tv');
 
     loadedContent.tv = true;
 }
@@ -405,7 +437,9 @@ async function fetchWatchmodeData(title, type) {
         const bestMatch = searchData.title_results[0];
         
         // Step 2: Get Sources
-        const sourcesRes = await fetch(`${WATCHMODE_BASE_URL}/title/${bestMatch.id}/sources/?apiKey=${WATCHMODE_API_KEY}&regions=US`);
+        // Determine region: use active filter if set, otherwise default to US
+        const region = activeFilters[type === 'tv' ? 'tv' : 'movie'].country || 'US';
+        const sourcesRes = await fetch(`${WATCHMODE_BASE_URL}/title/${bestMatch.id}/sources/?apiKey=${WATCHMODE_API_KEY}&regions=${region}`);
         const sourcesData = await sourcesRes.json();
         
         if (!sourcesData || sourcesData.length === 0) {
@@ -698,4 +732,202 @@ function renderRecommendations(items, type) {
 
         grid.appendChild(card);
     });
+}
+
+// --- Filter Management ---
+
+function setupFilters() {
+    // Desktop Clear Filter
+    const clearBtn = document.getElementById("clear-filters-btn");
+    if (clearBtn) clearBtn.onclick = () => clearFilters('movie');
+
+    // TV Clear Filter
+    const tvClearBtn = document.getElementById("tv-clear-filters-btn");
+    if (tvClearBtn) tvClearBtn.onclick = () => clearFilters('tv');
+}
+
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    const isShowing = dropdown.classList.contains('show');
+    
+    // Close all other dropdowns
+    document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
+    
+    if (!isShowing) {
+        dropdown.classList.add('show');
+    }
+}
+
+async function populateFilters(type) {
+    // Fetch Genres
+    try {
+        const response = await fetch(`${BASE_URL}/genre/${type}/list?api_key=${API_KEY}`);
+        const data = await response.json();
+        const genres = data.genres;
+        
+        const container = document.getElementById(type === 'movie' ? 'genre-list' : 'tv-genre-list');
+        if (container) {
+            container.innerHTML = "";
+            genres.forEach(genre => {
+                const item = document.createElement("div");
+                item.className = "filter-item";
+                item.innerText = genre.name;
+                item.dataset.id = genre.id;
+                item.onclick = () => toggleFilter(type, 'genres', genre.id, item);
+                container.appendChild(item);
+            });
+        }
+    } catch (error) {
+        console.error("Genre fetch error", error);
+    }
+
+    // Populate Countries
+    const cContainer = document.getElementById(type === 'movie' ? 'country-list' : 'tv-country-list');
+    if (cContainer) {
+        cContainer.innerHTML = "";
+        COUNTRIES.forEach(country => {
+            const item = document.createElement("div");
+            item.className = "filter-item";
+            item.innerText = country.name;
+            item.dataset.code = country.code;
+            item.onclick = () => setCountryFilter(type, country.code, item, country.name);
+            cContainer.appendChild(item);
+        });
+    }
+}
+
+function toggleFilter(type, category, value, element) {
+    const list = activeFilters[type][category];
+    const index = list.indexOf(value);
+    
+    if (index > -1) {
+        list.splice(index, 1);
+        element.classList.remove('active');
+    } else {
+        list.push(value);
+        element.classList.add('active');
+    }
+    
+    updateFilteredResults(type);
+}
+
+function setCountryFilter(type, code, element, name) {
+    const current = activeFilters[type].country;
+    const container = element.parentElement;
+    
+    container.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
+    
+    if (current === code) {
+        activeFilters[type].country = '';
+    } else {
+        activeFilters[type].country = code;
+        element.classList.add('active');
+    }
+
+    // Update button text
+    const groupID = type === 'movie' ? 'country-filter-group' : 'tv-country-filter-group';
+    const btn = document.getElementById(groupID).querySelector('.filter-btn');
+    btn.innerHTML = `${activeFilters[type].country ? name : 'Country'} <i class="fas fa-chevron-down"></i>`;
+
+    updateFilteredResults(type);
+}
+
+async function updateFilteredResults(type) {
+    const filters = activeFilters[type];
+    const hasFilters = filters.genres.length > 0 || filters.country !== '';
+    
+    const clearBtn = document.getElementById(type === 'movie' ? 'clear-filters-btn' : 'tv-clear-filters-btn');
+    if (clearBtn) clearBtn.style.display = hasFilters ? 'block' : 'none';
+
+    const mainContainer = document.querySelector(type === 'movie' ? '#home-view .main-container' : '#tv-shows-view .main-container');
+    if (!mainContainer) return;
+
+    if (!hasFilters) {
+        const filterSection = mainContainer.querySelector('.filtered-results-section');
+        if (filterSection) filterSection.remove();
+        mainContainer.querySelectorAll('.movie-section').forEach(row => row.style.display = 'block');
+        return;
+    }
+
+    // Prepare Discovery URL
+    let url = `${BASE_URL}/discover/${type}?api_key=${API_KEY}&sort_by=popularity.desc`;
+    
+    if (filters.genres.length > 0) {
+        url += `&with_genres=${filters.genres.join(',')}`;
+    }
+    
+    if (filters.country) {
+        if (type === 'movie') {
+            url += `&region=${filters.country}`;
+        } else {
+            url += `&with_origin_country=${filters.country}`;
+        }
+    }
+
+    // Hide original sections
+    mainContainer.querySelectorAll('.movie-section').forEach(row => {
+        if (!row.classList.contains('filtered-results-section')) {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Show/Update Filtered Section
+    let filterSection = mainContainer.querySelector('.filtered-results-section');
+    if (!filterSection) {
+        filterSection = document.createElement('section');
+        filterSection.className = 'movie-section filtered-results-section';
+        filterSection.innerHTML = `
+            <h2 class="section-title">Results for active filters</h2>
+            <div class="search-results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px;"></div>
+        `;
+        mainContainer.appendChild(filterSection);
+    }
+    filterSection.style.display = 'block';
+    
+    const grid = filterSection.querySelector('.search-results-grid');
+    grid.innerHTML = '<div class="skeleton-container" style="grid-column: 1/-1; display:flex; gap:15px; flex-wrap:wrap;">' + 
+                     Array(10).fill('<div class="movie-card skeleton" style="height:250px; width:130px; border-radius:4px;"></div>').join('') + 
+                     '</div>';
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const results = data.results;
+
+        grid.innerHTML = "";
+        if (!results || results.length === 0) {
+            grid.innerHTML = '<p class="empty-list-msg" style="grid-column: 1/-1;">No movies found for selected filters.</p>';
+            return;
+        }
+
+        results.forEach(item => {
+            const card = createContentCard(item, type);
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error("Filter results error", error);
+        grid.innerHTML = '<p class="error-msg">Error loading filtered results.</p>';
+    }
+}
+
+function clearFilters(type) {
+    activeFilters[type] = { genres: [], country: '' };
+    
+    const viewId = type === 'movie' ? 'home-view' : 'tv-shows-view';
+    const container = document.getElementById(viewId);
+    
+    container.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
+    
+    const clearBtn = container.querySelector('.clear-btn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    
+    const groupID = type === 'movie' ? 'country-filter-group' : 'tv-country-filter-group';
+    const btn = document.getElementById(groupID).querySelector('.filter-btn');
+    btn.innerHTML = `Country <i class="fas fa-chevron-down"></i>`;
+
+    const mainContainer = container.querySelector('.main-container');
+    const filterSection = mainContainer.querySelector('.filtered-results-section');
+    if (filterSection) filterSection.remove();
+    
+    mainContainer.querySelectorAll('.movie-section').forEach(row => row.style.display = 'block');
 }

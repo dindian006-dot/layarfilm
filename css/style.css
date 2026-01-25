@@ -803,3 +803,121 @@ body {
     background-position: -200% 0;
   }
 }
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 0 4%;
+  position: relative;
+  z-index: 100;
+  align-items: center;
+}
+
+.filter-group {
+  position: relative;
+}
+
+.filter-btn {
+  background: #000;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 220px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  margin-top: 5px;
+  border-radius: 4px;
+}
+
+.filter-dropdown.show {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.dropdown-content {
+  padding: 10px 0;
+}
+
+.filter-item {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.filter-item.active {
+  color: var(--netflix-red);
+  font-weight: 700;
+}
+
+.filter-item.active::after {
+  content: "✔";
+  font-size: 0.8rem;
+}
+
+.clear-btn {
+  background: transparent;
+  color: #aaa;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.clear-btn:hover {
+  color: #fff;
+}
+
+/* Custom Scrollbar for Dropdown */
+.filter-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-dropdown::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
