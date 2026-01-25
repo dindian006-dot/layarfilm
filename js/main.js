@@ -18,6 +18,11 @@ const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 // GogoAnime API (anbuanime) Configuration
 const GOGO_API_URL = "https://anbuanime.onrender.com";
 
+// LK21 API Configuration
+// TODO: Replace with your deployed LK21 API URL after deployment
+// Deploy from: https://github.com/febriadj/lk21-api
+const LK21_API_URL = "https://YOUR-LK21-API.vercel.app"; // Change this!
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -1343,6 +1348,114 @@ async function fetchAnimeCollections() {
             row.innerHTML = '<p class="error-msg">Failed to load collection. API rate limit may have been reached.</p>';
         }
     }
+}
+
+// --- LK21 API Integration ---
+
+function switchMoviesTab(tab, btn) {
+    // Update Tab UI
+    const container = btn.parentElement;
+    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Toggle Content
+    document.getElementById('movies-popular-content').style.display = tab === 'popular' ? 'block' : 'none';
+    document.querySelector('.filter-controls').style.display = tab === 'popular' ? 'flex' : 'none';
+    document.getElementById('movies-lk21-content').style.display = tab === 'lk21' ? 'block' : 'none';
+
+    if (tab === 'lk21') fetchLK21Movies();
+}
+
+async function fetchLK21Movies() {
+    const grid = document.getElementById("movies-lk21-grid");
+    
+    // Check if API URL is configured
+    if (LK21_API_URL.includes('YOUR-LK21-API')) {
+        grid.innerHTML = `<div style="text-align:center; padding:40px;">
+                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.2rem; margin-bottom:15px;">⚠️ LK21 API Not Configured</p>
+                            <p style="color:#aaa; font-size:0.95rem; line-height:1.6; max-width:600px; margin:0 auto;">
+                                Untuk menggunakan fitur ini, Anda perlu:<br><br>
+                                1. Deploy LK21 API dari <a href="https://github.com/febriadj/lk21-api" target="_blank" style="color:var(--netflix-red);">GitHub</a> ke Vercel/Railway<br>
+                                2. Ganti <code style="background:#333; padding:2px 6px; border-radius:3px;">LK21_API_URL</code> di <code style="background:#333; padding:2px 6px; border-radius:3px;">main.js</code> dengan URL deployment Anda<br>
+                                3. Refresh halaman
+                            </p>
+                          </div>`;
+        return;
+    }
+
+    grid.innerHTML = '<div class="loading-results">Loading LK21 movies...</div>';
+
+    try {
+        console.log("🎬 Fetching LK21 popular movies...");
+        
+        const response = await fetch(`${LK21_API_URL}/popular/movies?page=1`);
+        
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ LK21 data received:", data);
+        
+        const movies = data.results || data.data || [];
+        renderLK21Results(movies);
+
+    } catch (error) {
+        console.error("❌ LK21 API Error:", error);
+        grid.innerHTML = `<div style="text-align:center; padding:20px;">
+                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load LK21 movies.</p>
+                            <p style="color:#aaa; font-size:0.9rem;">${error.message}</p>
+                            <p style="color:#666; font-size:0.8rem; margin-top:10px;">Pastikan LK21 API sudah di-deploy dan URL sudah benar</p>
+                          </div>`;
+    }
+}
+
+function renderLK21Results(movies) {
+    const grid = document.getElementById("movies-lk21-grid");
+    grid.innerHTML = "";
+
+    if (movies.length === 0) {
+        grid.innerHTML = '<p class="empty-list-msg">No movies found.</p>';
+        return;
+    }
+
+    movies.forEach(item => {
+        const card = createLK21Card(item);
+        grid.appendChild(card);
+    });
+}
+
+function createLK21Card(item) {
+    const card = document.createElement("div");
+    card.className = "movie-card";
+
+    const title = item.title || item.name;
+    const poster = item.poster || item.thumbnail || "https://via.placeholder.com/500x750?text=No+Image";
+    const rating = item.rating || "N/A";
+    const year = item.year || "";
+
+    card.innerHTML = `
+        <img src="${poster}" alt="${title}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="card-overlay">
+            <div class="card-info">
+                <h3>${title}</h3>
+                <div style="margin-top:5px; display:flex; gap:10px; align-items:center;">
+                    <span style="color:#ffd700;">⭐ ${rating}</span>
+                    ${year ? `<span style="color:#aaa;">${year}</span>` : ''}
+                    <span style="background:var(--netflix-red); color:#fff; font-size:9px; padding:2px 6px; border-radius:3px;">ID SUB</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    card.addEventListener("click", () => {
+        // Try to search on TMDB for modal details
+        if (title) {
+            handleSearch(title);
+        }
+    });
+
+    return card;
 }
 
 // --- GogoAnime Integration ---
