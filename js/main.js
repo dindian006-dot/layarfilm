@@ -1387,7 +1387,7 @@ async function fetchRecentlyAvailable() {
     console.log("Fetching new RapidAPI data...");
     grid.innerHTML = '<div class="loading-results">Loading streaming data...</div>';
 
-    const url = `https://${RAPID_API_HOST}/shows/search/filters?country=us&show_type=movie&order_by=popularity_1month&catalogs=netflix,prime,disney,hbo,hulu,peacock,paramount,starz,showtime,apple,mubi&limit=30`;
+    const url = `https://${RAPID_API_HOST}/v2/shows/search/filters?country=us&show_type=movie&order_by=popularity_1month&catalogs=netflix,prime,disney,hbo,hulu,peacock,paramount,starz,showtime,apple,mubi&limit=30`;
     
     try {
         const response = await fetch(url, {
