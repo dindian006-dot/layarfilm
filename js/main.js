@@ -1342,6 +1342,7 @@ async function fetchAnimeCollections() {
             console.error(`Collection ${collection.id} error:`, error);
             row.innerHTML = '<p class="error-msg">Failed to load collection. API rate limit may have been reached.</p>';
         }
+    }
 }
 
 // --- GogoAnime Integration ---
