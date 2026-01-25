@@ -15,6 +15,9 @@ const WATCHMODE_BASE_URL = "https://api.watchmode.com/v1";
 // Jikan API (MAL) Configuration
 const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 
+// GogoAnime API (anbuanime) Configuration
+const GOGO_API_URL = "https://anbuanime.onrender.com";
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -596,6 +599,19 @@ async function openModal(item, type) {
   const recGrid = document.getElementById("recommendations-grid");
   recSection.style.display = "none";
   recGrid.innerHTML = "";
+
+  // Anime Episode Section
+  const animeEpContainer = document.getElementById("anime-episode-container");
+  const animePlayerWrapper = document.getElementById("anime-player-wrapper");
+  const animePlayer = document.getElementById("anime-player");
+  const episodeList = document.getElementById("episode-list");
+  
+  if (animeEpContainer) {
+      animeEpContainer.style.display = "none";
+      animePlayerWrapper.style.display = "none";
+      animePlayer.src = "";
+      episodeList.innerHTML = "";
+  }
   
   const title = item.title || item.name;
   const date = item.release_date || item.first_air_date;
@@ -660,6 +676,16 @@ async function openModal(item, type) {
   showRecommendationsSkeleton();
   const recommendations = await fetchSimilarContent(item.id, type);
   renderRecommendations(recommendations, type);
+
+  // Check for Anime (Genre 16 or Country JP or Type 'tv' with animation)
+  const isAnime = (item.genre_ids && item.genre_ids.includes(16)) || 
+                  (type === 'tv' && item.origin_country && item.origin_country.includes('JP'));
+
+  if (isAnime) {
+      // Trigger GogoAnime Search
+      // Use original_name for better match on Gogo
+      fetchGogoAnimeData(item.original_name || item.title || item.name);
+  }
 }
 
 function refreshModalListBtn(item, type) {
@@ -1074,6 +1100,9 @@ async function initAnimeApp() {
     await fetchAndRenderJikan('top', 'anime-top-row');
 
     await fetchAndRenderAnime('new', 'anime-new-row');
+    
+    // Fetch GogoAnime Recent Releases
+    await fetchGogoRecentEpisodes();
 
     loadedContent.anime = true;
 }
@@ -1312,6 +1341,162 @@ async function fetchAnimeCollections() {
         } catch (error) {
             console.error(`Collection ${collection.id} error:`, error);
             row.innerHTML = '<p class="error-msg">Failed to load collection. API rate limit may have been reached.</p>';
+        }
+    }
+}
+// --- GogoAnime Integration ---
+
+async function fetchGogoRecentEpisodes() {
+    const row = document.getElementById("anime-gogo-recent");
+    if (!row) return;
+
+    row.innerHTML = '<div class="skeleton-container" style="display:flex; gap:20px;">' + Array(6).fill('<div class="movie-card skeleton" style="height:250px; width:160px; flex-shrink:0;"></div>').join('') + '</div>';
+
+    try {
+        const response = await fetch(`${GOGO_API_URL}/recent-release`);
+        const data = await response.json();
+        
+        // Data usually comes as array directly or inside key. Adjusting based on standard GogoAPI.
+        // Usually [ { episodeId, episodeNum, animeImg, animeTitle, ... }, ... ]
+        const results = Array.isArray(data) ? data : (data.results || []);
+
+        row.innerHTML = "";
+        if (results.length === 0) {
+            row.innerHTML = '<p class="empty-list-msg">No recent episodes found.</p>';
+            return;
+        }
+
+        results.slice(0, 15).forEach(item => {
+            const card = createGogoCard(item);
+            row.appendChild(card);
+        });
+    } catch (error) {
+        console.error("GogoAnime Recent Error:", error);
+        row.innerHTML = '<p class="error-msg">Failed to load recent episodes.</p>';
+    }
+}
+
+function createGogoCard(item) {
+    const card = document.createElement("div");
+    card.className = "movie-card";
+
+    const title = item.animeTitle;
+    const epNum = item.episodeNum;
+    const poster = item.animeImg;
+    const epId = item.episodeId; // used to watch directly
+
+    card.innerHTML = `
+        <img src="${poster}" alt="${title}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+        <div class="card-overlay">
+            <div class="card-info">
+                <h3>${title}</h3>
+                <p>Episode ${epNum}</p>
+            </div>
+        </div>
+        <div class="mal-badge" style="position:absolute; top:10px; left:10px; background:rgba(229, 9, 20, 0.8); color:#fff; padding:2px 5px; border-radius:3px; font-size:10px; font-weight:bold;">NEW EP</div>
+    `;
+
+    card.addEventListener("click", () => {
+        bridgeGogoToTMDB(title, epId);
+    });
+
+    return card;
+}
+
+// Bridge Gogo item to TMDB Modal
+async function bridgeGogoToTMDB(gogoTitle, episodeId) {
+    // 1. Search TMDB
+    try {
+        const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(gogoTitle)}`);
+        const data = await res.json();
+        const match = data.results && data.results.find(r => r.media_type==='tv' || r.media_type==='movie');
+
+        if (match) {
+            openModal(match, match.media_type);
+            setTimeout(() => loadGogoPlayer(episodeId), 500);
+        } else {
+            alert("Could not find TMDB details for this anime.");
+        }
+    } catch (e) {
+        console.error("Bridge Error", e);
+    }
+}
+
+async function fetchGogoAnimeData(title) {
+    const container = document.getElementById("anime-episode-container");
+    const list = document.getElementById("episode-list");
+    
+    // Clean title for better search
+    // Remove year from title if present (e.g. "Title (2024)") could confuse gogo search
+    const cleanTitle = title.replace(/\(\d{4}\)/, '').trim();
+
+    try {
+        const response = await fetch(`${GOGO_API_URL}/search?keyw=${encodeURIComponent(cleanTitle)}`);
+        const data = await response.json();
+        
+        if (!data || data.length === 0) return; // No match found
+
+        // Take first match
+        const animeId = data[0].animeId;
+        
+        // Fetch Details to get Episode List
+        const detailsRes = await fetch(`${GOGO_API_URL}/anime-details/${animeId}`);
+        const detailsData = await detailsRes.json();
+        
+        if (detailsData && detailsData.episodesList && detailsData.episodesList.length > 0) {
+            // Show Container
+            if (container) {
+                container.style.display = "block";
+                list.innerHTML = "";
+                
+                const sortedEps = detailsData.episodesList.sort((a, b) => a.episodeNum - b.episodeNum);
+
+                sortedEps.forEach(ep => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn-episode"; 
+                    btn.innerText = `Ep ${ep.episodeNum}`;
+                    btn.style.cssText = "padding: 8px 12px; background: #333; border: 1px solid #444; color: #fff; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.2s;";
+                    btn.onmouseover = () => btn.style.background = "#555";
+                    btn.onmouseout = () => btn.style.background = "#333";
+                    btn.onclick = () => {
+                        // Highlight active
+                        list.querySelectorAll('.btn-episode').forEach(b => b.style.borderColor = '#444');
+                        btn.style.borderColor = 'var(--netflix-red)';
+                        loadGogoPlayer(ep.episodeId);
+                    };
+                    list.appendChild(btn);
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error("GogoAnime Search/Details Error:", error);
+    }
+}
+
+async function loadGogoPlayer(episodeId) {
+    const playerWrapper = document.getElementById("anime-player-wrapper");
+    const player = document.getElementById("anime-player");
+    
+    if (playerWrapper && player) {
+        playerWrapper.style.display = "block";
+        playerWrapper.scrollIntoView({ behavior: 'smooth' });
+        
+        try {
+            const res = await fetch(`${GOGO_API_URL}/vidcdn-watch/${episodeId}`);
+            const data = await res.json();
+            
+            const streamUrl = data.Referer || data.link; 
+            
+            if (streamUrl) {
+                player.src = streamUrl;
+            } else {
+                alert("Stream link not found.");
+            }
+            
+        } catch (e) {
+            console.error("Player Load Error", e);
+            alert("Error loading player source.");
         }
     }
 }
