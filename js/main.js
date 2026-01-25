@@ -18,10 +18,6 @@ const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 // GogoAnime API (anbuanime) Configuration
 const GOGO_API_URL = "https://anbuanime.onrender.com";
 
-// RapidAPI (Streaming Availability) Configuration
-const RAPID_API_KEY = "765861946bmsha0d319703ab7c2ap1ebea3jsn2d5ecb73ee12";
-const RAPID_API_HOST = "streaming-availability.p.rapidapi.com";
-
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -39,8 +35,7 @@ const loadedContent = {
     movies: false,
     tv: false,
     anime: false,
-    animeCollections: false,
-    rapidMovies: false
+    animeCollections: false
 };
 let activeFilters = {
     movie: { genres: [], country: '' },
@@ -1347,197 +1342,6 @@ async function fetchAnimeCollections() {
             console.error(`Collection ${collection.id} error:`, error);
             row.innerHTML = '<p class="error-msg">Failed to load collection. API rate limit may have been reached.</p>';
         }
-    }
-}
-
-// --- Recently Available (RapidAPI) ---
-
-function switchMoviesTab(tab, btn) {
-    // Update Tab UI
-    const container = btn.parentElement;
-    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    // Toggle Content
-    document.getElementById('movies-popular-content').style.display = tab === 'popular' ? 'block' : 'none';
-    document.querySelector('.filter-controls').style.display = tab === 'popular' ? 'flex' : 'none'; // Hide filters for rapid tab
-    document.getElementById('movies-recent-content').style.display = tab === 'recent' ? 'block' : 'none';
-
-    if (tab === 'recent') fetchRecentlyAvailable();
-}
-
-async function fetchRecentlyAvailable() {
-    // Check Cache
-    const cacheKey = 'rapid_recent_data';
-    const cached = localStorage.getItem(cacheKey);
-    const grid = document.getElementById("movies-recent-grid");
-
-    if (cached) {
-        const { timestamp, data } = JSON.parse(cached);
-        const now = Date.now();
-        // 24 Hours = 24 * 60 * 60 * 1000 = 86400000 ms
-        if (now - timestamp < 86400000) {
-            console.log("✅ Using cached RapidAPI data");
-            renderRapidResults(data);
-            return;
-        } else {
-            console.log("⏰ Cache expired, fetching new data...");
-        }
-    }
-
-    // Fetch New Data
-    console.log("🔄 Fetching new RapidAPI data...");
-    console.log("🔑 API Key:", RAPID_API_KEY.substring(0, 10) + "...");
-    console.log("🌐 API Host:", RAPID_API_HOST);
-    
-    grid.innerHTML = '<div class="loading-results">Loading streaming data...</div>';
-
-    // Use /changes endpoint instead - simpler and more reliable
-    // Get shows that were added in the last 7 days
-    const url = `https://${RAPID_API_HOST}/changes?change_type=new&item_type=show&show_type=movie&country=us&catalogs=netflix,prime,disney,hbo,hulu&limit=30`;
-    
-    console.log("📡 Request URL:", url);
-    
-    try {
-        // Add timeout to fetch
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-        
-        console.log("⏳ Sending request...");
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'x-rapidapi-key': RAPID_API_KEY,
-                'x-rapidapi-host': RAPID_API_HOST
-            },
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        console.log("📥 Response status:", response.status, response.statusText);
-        console.log("📋 Response headers:", [...response.headers.entries()]);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ RapidAPI Error Detail:", errorText);
-            throw new Error(`API Error: ${response.status} - ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log("✅ Response received:", result);
-        
-        // Extract shows from changes response
-        const changes = result.changes || [];
-        console.log("🔄 Changes count:", changes.length);
-        
-        // Get unique shows from changes
-        const movies = changes.map(change => change.show).filter(show => show);
-        console.log("🎬 Movies count:", movies.length);
-
-        // Save to Cache
-        localStorage.setItem(cacheKey, JSON.stringify({
-            timestamp: Date.now(),
-            data: movies
-        }));
-        
-        console.log("💾 Data cached successfully");
-
-        renderRapidResults(movies);
-
-    } catch (error) {
-        console.error("❌ RapidAPI Fetch Failed:", error);
-        console.error("❌ Error name:", error.name);
-        console.error("❌ Error message:", error.message);
-        
-        let errorMsg = error.message;
-        if (error.name === 'AbortError') {
-            errorMsg = 'Request timeout - API took too long to respond';
-        } else if (error.message.includes('Failed to fetch')) {
-            errorMsg = 'Network error - Check CORS or internet connection';
-        }
-        
-        grid.innerHTML = `<div style="text-align:center; padding:20px;">
-                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load movies.</p>
-                            <p style="color:#aaa; font-size:0.9rem;">${errorMsg}</p>
-                            <p style="color:#666; font-size:0.8rem; margin-top:10px;">Check browser console (F12) for details</p>
-                            <button onclick="localStorage.removeItem('rapid_recent_data'); fetchRecentlyAvailable()" style="margin-top:15px; padding:8px 16px; background:#333; border:none; color:#fff; cursor:pointer;">Retry</button>
-                          </div>`;
-    }
-}
-
-function renderRapidResults(movies) {
-    const grid = document.getElementById("movies-recent-grid");
-    grid.innerHTML = "";
-
-    if (movies.length === 0) {
-        grid.innerHTML = '<p class="empty-list-msg">No recent movies found.</p>';
-        return;
-    }
-
-    movies.forEach(item => {
-        const card = createRapidCard(item);
-        grid.appendChild(card);
-    });
-}
-
-function createRapidCard(item) {
-    const card = document.createElement("div");
-    card.className = "movie-card";
-
-    const title = item.title;
-    // Prefer vertical poster options if available, RapidAPI usually gives 'size' options in images
-    // item.imageSet.verticalPoster.w480 or similar.
-    // Adjust based on actual API response structure. 
-    // Usually: item.imageSet.verticalPoster.w600/w720 etc.
-    const poster = (item.imageSet && item.imageSet.verticalPoster && item.imageSet.verticalPoster.w600) 
-                   || (item.imageSet && item.imageSet.verticalPoster && item.imageSet.verticalPoster.w720) 
-                   || "https://via.placeholder.com/500x750?text=No+Image";
-
-    // Extract Platforms (limit 3)
-    let platforms = "";
-    if (item.streamingOptions && item.streamingOptions.us) {
-        const services = item.streamingOptions.us.map(s => s.service.id).filter((v, i, a) => a.indexOf(v) === i); // unique
-        services.slice(0, 3).forEach(svc => {
-            // Map service ID to readable name or icon if poss.
-            // Simplified: just text badge
-            platforms += `<span style="background:var(--netflix-red); color:#fff; font-size:9px; padding:2px 4px; border-radius:3px; margin-right:3px; text-transform:uppercase;">${svc}</span>`;
-        });
-    }
-
-    card.innerHTML = `
-        <img src="${poster}" alt="${title}" loading="lazy">
-        <div class="card-overlay">
-            <div class="card-info">
-                <h3>${title}</h3>
-                <div style="margin-top:5px;">${platforms}</div>
-            </div>
-        </div>
-    `;
-
-    card.addEventListener("click", () => {
-        // Bridge to TMDB: item.tmdbId is usually provided by this API
-        if (item.tmdbId) {
-            // Fetch TMDB details using ID
-            fetchMovieById(item.tmdbId);
-        } else {
-            // Fallback search
-            handleSearch(title); 
-        }
-    });
-
-    return card;
-}
-
-async function fetchMovieById(id) {
-    try {
-        const res = await fetch(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
-        const data = await res.json();
-        openModal(data, 'movie');
-    } catch (e) {
-        console.error("TMDB Fetch Error", e);
-    }
 }
 
 // --- GogoAnime Integration ---
