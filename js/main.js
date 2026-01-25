@@ -1377,37 +1377,57 @@ async function fetchRecentlyAvailable() {
         const now = Date.now();
         // 24 Hours = 24 * 60 * 60 * 1000 = 86400000 ms
         if (now - timestamp < 86400000) {
-            console.log("Using cached RapidAPI data");
+            console.log("✅ Using cached RapidAPI data");
             renderRapidResults(data);
             return;
+        } else {
+            console.log("⏰ Cache expired, fetching new data...");
         }
     }
 
     // Fetch New Data
-    console.log("Fetching new RapidAPI data...");
+    console.log("🔄 Fetching new RapidAPI data...");
+    console.log("🔑 API Key:", RAPID_API_KEY.substring(0, 10) + "...");
+    console.log("🌐 API Host:", RAPID_API_HOST);
+    
     grid.innerHTML = '<div class="loading-results">Loading streaming data...</div>';
 
     // Use simplified V2 query to minimize errors
-    // Note: 'catalogs' parameter expects comma separated values.
     const url = `https://${RAPID_API_HOST}/v2/shows/search/filters?country=us&show_type=movie&order_by=popularity_1month&catalogs=netflix,prime,disney,hbo,hulu,peacock,paramount,starz,showtime,apple,mubi&limit=30`;
     
+    console.log("📡 Request URL:", url);
+    
     try {
+        // Add timeout to fetch
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        console.log("⏳ Sending request...");
+        
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'x-rapidapi-key': RAPID_API_KEY,  // Lowercase as per snippet
+                'x-rapidapi-key': RAPID_API_KEY,
                 'x-rapidapi-host': RAPID_API_HOST
-            }
+            },
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        console.log("📥 Response status:", response.status, response.statusText);
+        console.log("📋 Response headers:", [...response.headers.entries()]);
 
         if (!response.ok) {
-            // Log detailed error for debugging
             const errorText = await response.text();
-            console.error("RapidAPI Error Detail:", errorText);
+            console.error("❌ RapidAPI Error Detail:", errorText);
             throw new Error(`API Error: ${response.status} - ${response.statusText}`);
         }
 
         const result = await response.json();
+        console.log("✅ Response received:", result);
+        console.log("🎬 Movies count:", result.shows ? result.shows.length : 0);
+        
         const movies = result.shows || [];
 
         // Save to Cache
@@ -1415,14 +1435,27 @@ async function fetchRecentlyAvailable() {
             timestamp: Date.now(),
             data: movies
         }));
+        
+        console.log("💾 Data cached successfully");
 
         renderRapidResults(movies);
 
     } catch (error) {
-        console.error("RapidAPI Fetch Failed:", error);
+        console.error("❌ RapidAPI Fetch Failed:", error);
+        console.error("❌ Error name:", error.name);
+        console.error("❌ Error message:", error.message);
+        
+        let errorMsg = error.message;
+        if (error.name === 'AbortError') {
+            errorMsg = 'Request timeout - API took too long to respond';
+        } else if (error.message.includes('Failed to fetch')) {
+            errorMsg = 'Network error - Check CORS or internet connection';
+        }
+        
         grid.innerHTML = `<div style="text-align:center; padding:20px;">
                             <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load movies.</p>
-                            <p style="color:#aaa; font-size:0.9rem;">${error.message}</p>
+                            <p style="color:#aaa; font-size:0.9rem;">${errorMsg}</p>
+                            <p style="color:#666; font-size:0.8rem; margin-top:10px;">Check browser console (F12) for details</p>
                             <button onclick="localStorage.removeItem('rapid_recent_data'); fetchRecentlyAvailable()" style="margin-top:15px; padding:8px 16px; background:#333; border:none; color:#fff; cursor:pointer;">Retry</button>
                           </div>`;
     }
