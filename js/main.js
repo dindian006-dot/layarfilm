@@ -682,8 +682,8 @@ async function openModal(item, type) {
                   (type === 'tv' && item.origin_country && item.origin_country.includes('JP'));
 
   if (isAnime) {
-      // Trigger GogoAnime Search
-      // Use original_name for better match on Gogo
+      // GogoAnime API is unstable. Keeping this function but handling errors silently.
+      // fetchGogoAnimeData(...) will just fail silently if API is down.
       fetchGogoAnimeData(item.original_name || item.title || item.name);
   }
 }
@@ -1101,8 +1101,8 @@ async function initAnimeApp() {
 
     await fetchAndRenderAnime('new', 'anime-new-row');
     
-    // Fetch GogoAnime Recent Releases
-    await fetchGogoRecentEpisodes();
+    // GogoAnime API is currently down/unstable. 
+    // fetchGogoRecentEpisodes(); // Disabled to prevent UI errors
 
     loadedContent.anime = true;
 }
