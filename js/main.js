@@ -19,9 +19,8 @@ const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 const GOGO_API_URL = "https://anbuanime.onrender.com";
 
 // LK21 API Configuration
-// TODO: Replace with your deployed LK21 API URL after deployment
-// Deploy from: https://github.com/febriadj/lk21-api
-const LK21_API_URL = "https://YOUR-LK21-API.vercel.app"; // Change this!
+// Deployed at GitHub Pages
+const LK21_API_URL = "https://dindian006-dot.github.io/lk21-api";
 
 // Endpoints
 const ENDPOINTS = {
