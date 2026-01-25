@@ -27,7 +27,8 @@ const ENDPOINTS = {
 let searchTimeout = null;
 const loadedContent = {
     movies: false,
-    tv: false
+    tv: false,
+    anime: false
 };
 let activeFilters = {
     movie: { genres: [], country: '' },
@@ -256,12 +257,21 @@ function setupNavigation() {
     setActiveLink(navPopular);
     initPopularApp();
   });
+
+  const navAnime = document.getElementById("nav-anime");
+  navAnime.addEventListener("click", (e) => {
+    e.preventDefault();
+    showView("anime");
+    setActiveLink(navAnime);
+    initAnimeApp();
+  });
 }
 
 function showView(viewName) {
   const homeContent = document.getElementById("homepage-content");
   const movieContent = document.getElementById("movies-view");
   const tvContent = document.getElementById("tv-shows-view");
+  const animeContent = document.getElementById("anime-view");
   const popularContent = document.getElementById("popular-view");
   const searchView = document.getElementById("search-view");
   const mylistView = document.getElementById("mylist-view");
@@ -269,11 +279,12 @@ function showView(viewName) {
   homeContent.style.display = viewName === "homepage" ? "block" : "none";
   movieContent.style.display = viewName === "movies" ? "block" : "none";
   tvContent.style.display = viewName === "tv" ? "block" : "none";
+  animeContent.style.display = viewName === "anime" ? "block" : "none";
   popularContent.style.display = viewName === "popular" ? "block" : "none";
   searchView.style.display = viewName === "search" ? "block" : "none";
   mylistView.style.display = viewName === "mylist" ? "block" : "none";
 
-  if (viewName === "homepage" || viewName === "movies" || viewName === "tv" || viewName === "popular") {
+  if (viewName === "homepage" || viewName === "movies" || viewName === "tv" || viewName === "popular" || viewName === "anime") {
     document.getElementById("search-input").value = "";
   }
 }
@@ -1043,4 +1054,77 @@ function renderPopularResults(results) {
         const card = createContentCard(item, item.media_type);
         grid.appendChild(card);
     });
+}
+
+// --- Anime Logic ---
+
+async function initAnimeApp() {
+    if (loadedContent.anime) return;
+
+    // Fetch and render Anime rows
+    await fetchAndRenderAnime('trending', 'anime-trending-row');
+    await fetchAndRenderAnime('popular', 'anime-popular-row');
+    await fetchAndRenderAnime('new', 'anime-new-row');
+
+    loadedContent.anime = true;
+}
+
+async function fetchAndRenderAnime(category, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '<div class="skeleton-container" style="display:flex; gap:20px;">' + Array(6).fill('<div class="movie-card skeleton" style="height:250px; width:160px; flex-shrink:0;"></div>').join('') + '</div>';
+
+    let movieUrl, tvUrl;
+    
+    if (category === 'trending') {
+        movieUrl = `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`;
+        tvUrl = `${BASE_URL}/trending/tv/week?api_key=${API_KEY}`;
+    } else if (category === 'popular') {
+        movieUrl = `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=16&with_origin_country=JP&sort_by=popularity.desc`;
+        tvUrl = `${BASE_URL}/discover/tv?api_key=${API_KEY}&with_genres=16&with_origin_country=JP&sort_by=popularity.desc`;
+    } else if (category === 'new') {
+        movieUrl = `${BASE_URL}/movie/now_playing?api_key=${API_KEY}`;
+        tvUrl = `${BASE_URL}/tv/on_the_air?api_key=${API_KEY}`;
+    }
+
+    try {
+        const [movieRes, tvRes] = await Promise.all([fetch(movieUrl), fetch(tvUrl)]);
+        const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
+
+        const animeMovies = (movieData.results || []).filter(item => {
+            // Trending & New need extra filtering. Popular (discover) is already filtered.
+            if (category === 'popular') return true;
+            const isAnimation = item.genre_ids && item.genre_ids.includes(16);
+            // Some trending don't have origin_country in the list result, might need to assume or check further
+            // For discovery/trending, genre is a better indicator, but user asked for JP
+            // Actually trending/movie doesn't have origin_country usually in the list.
+            return isAnimation; 
+        });
+
+        const animeTV = (tvData.results || []).filter(item => {
+            if (category === 'popular') return true;
+            const isAnimation = item.genre_ids && item.genre_ids.includes(16);
+            const isJP = item.origin_country && item.origin_country.includes('JP');
+            return isAnimation && isJP;
+        });
+
+        // Merge and sort
+        let combined = [...animeMovies.map(m => ({...m, media_type: 'movie'})), ...animeTV.map(t => ({...t, media_type: 'tv'}))];
+        combined.sort((a, b) => b.popularity - a.popularity);
+
+        container.innerHTML = "";
+        
+        if (combined.length === 0) {
+            container.innerHTML = '<p class="empty-list-msg">No anime found in this category.</p>';
+            return;
+        }
+
+        combined.forEach(item => {
+            const card = createContentCard(item, item.media_type);
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error(`Error loading ${category} anime:`, error);
+        container.innerHTML = '<p class="error-msg">Error loading content.</p>';
+    }
 }

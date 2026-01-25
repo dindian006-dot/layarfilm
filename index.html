@@ -24,6 +24,7 @@
           <li><a href="#" class="active" id="nav-home">Home</a></li>
           <li><a href="#" id="nav-tv">TV Shows</a></li>
           <li><a href="#" id="nav-movies">Movies</a></li>
+          <li><a href="#" id="nav-anime">Anime</a></li>
           <li><a href="#" id="nav-popular">New & Popular</a></li>
           <li><a href="#" id="nav-mylist">My List</a></li>
         </ul>
@@ -139,6 +140,36 @@
           <!-- Results injected here -->
         </div>
       </section>
+    </div>
+
+    <!-- Anime View (Hidden by default) -->
+    <div id="anime-view" style="display: none;">
+      <header class="hero" id="anime-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">ANIME</h1>
+          <p class="hero-description">
+            Experience the vibrant world of Japanese animation. From Shonen action to emotional masterpieces.
+          </p>
+        </div>
+        <div class="hero-fade-bottom"></div>
+      </header>
+
+      <main class="main-container">
+        <section class="movie-section">
+          <h2 class="section-title">Trending Anime</h2>
+          <div class="movie-row" id="anime-trending-row"></div>
+        </section>
+
+        <section class="movie-section">
+          <h2 class="section-title">Popular Anime</h2>
+          <div class="movie-row" id="anime-popular-row"></div>
+        </section>
+
+        <section class="movie-section">
+          <h2 class="section-title">New Releases</h2>
+          <div class="movie-row" id="anime-new-row"></div>
+        </section>
+      </main>
     </div>
 
     <!-- New & Popular View (Hidden by default) -->
