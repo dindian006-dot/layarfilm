@@ -73,10 +73,19 @@ async function initApp() {
   // Fetch and render Popular Movies (for Trending Now)
   await fetchAndRenderContent(ENDPOINTS.popular, "popular-row", "movie");
   
-  // Populate Home Filters
-  await populateFilters('movie');
-  
   loadedContent.movies = true;
+}
+
+async function initMoviesApp() {
+    if (loadedContent.movies_view) return;
+
+    // Initial Popular Fetch for Movies View
+    await fetchAndRenderContent(ENDPOINTS.popular, "movies-popular-row", "movie");
+
+    // Populate Filters
+    await populateFilters('movie');
+
+    loadedContent.movies_view = true;
 }
 
 async function initTVApp() {
@@ -226,6 +235,14 @@ function setupNavigation() {
       initTVApp();
   });
 
+  const navMovies = document.getElementById("nav-movies");
+  navMovies.addEventListener("click", (e) => {
+    e.preventDefault();
+    showView("movies");
+    setActiveLink(navMovies);
+    initMoviesApp();
+  });
+
   navMyList.addEventListener("click", (e) => {
     e.preventDefault();
     showView("mylist");
@@ -236,16 +253,18 @@ function setupNavigation() {
 
 function showView(viewName) {
   const homeContent = document.getElementById("homepage-content");
+  const movieContent = document.getElementById("movies-view");
   const tvContent = document.getElementById("tv-shows-view");
   const searchView = document.getElementById("search-view");
   const mylistView = document.getElementById("mylist-view");
 
   homeContent.style.display = viewName === "homepage" ? "block" : "none";
+  movieContent.style.display = viewName === "movies" ? "block" : "none";
   tvContent.style.display = viewName === "tv" ? "block" : "none";
   searchView.style.display = viewName === "search" ? "block" : "none";
   mylistView.style.display = viewName === "mylist" ? "block" : "none";
 
-  if (viewName === "homepage" || viewName === "tv") {
+  if (viewName === "homepage" || viewName === "movies" || viewName === "tv") {
     document.getElementById("search-input").value = "";
   }
 }
@@ -737,8 +756,8 @@ function renderRecommendations(items, type) {
 // --- Filter Management ---
 
 function setupFilters() {
-    // Desktop Clear Filter
-    const clearBtn = document.getElementById("clear-filters-btn");
+    // Desktop Clear Filter (changed ID to movie-clear-filters-btn)
+    const clearBtn = document.getElementById("movie-clear-filters-btn");
     if (clearBtn) clearBtn.onclick = () => clearFilters('movie');
 
     // TV Clear Filter
@@ -765,7 +784,7 @@ async function populateFilters(type) {
         const data = await response.json();
         const genres = data.genres;
         
-        const container = document.getElementById(type === 'movie' ? 'genre-list' : 'tv-genre-list');
+        const container = document.getElementById(type === 'movie' ? 'movie-genre-list' : 'tv-genre-list');
         if (container) {
             container.innerHTML = "";
             genres.forEach(genre => {
@@ -782,7 +801,7 @@ async function populateFilters(type) {
     }
 
     // Populate Countries
-    const cContainer = document.getElementById(type === 'movie' ? 'country-list' : 'tv-country-list');
+    const cContainer = document.getElementById(type === 'movie' ? 'movie-country-list' : 'tv-country-list');
     if (cContainer) {
         cContainer.innerHTML = "";
         COUNTRIES.forEach(country => {
@@ -825,7 +844,7 @@ function setCountryFilter(type, code, element, name) {
     }
 
     // Update button text
-    const groupID = type === 'movie' ? 'country-filter-group' : 'tv-country-filter-group';
+    const groupID = type === 'movie' ? 'movie-country-filter-group' : 'tv-country-filter-group';
     const btn = document.getElementById(groupID).querySelector('.filter-btn');
     btn.innerHTML = `${activeFilters[type].country ? name : 'Country'} <i class="fas fa-chevron-down"></i>`;
 
@@ -836,10 +855,10 @@ async function updateFilteredResults(type) {
     const filters = activeFilters[type];
     const hasFilters = filters.genres.length > 0 || filters.country !== '';
     
-    const clearBtn = document.getElementById(type === 'movie' ? 'clear-filters-btn' : 'tv-clear-filters-btn');
+    const clearBtn = document.getElementById(type === 'movie' ? 'movie-clear-filters-btn' : 'tv-clear-filters-btn');
     if (clearBtn) clearBtn.style.display = hasFilters ? 'block' : 'none';
 
-    const mainContainer = document.querySelector(type === 'movie' ? '#home-view .main-container' : '#tv-shows-view .main-container');
+    const mainContainer = document.querySelector(type === 'movie' ? '#movies-view .main-container' : '#tv-shows-view .main-container');
     if (!mainContainer) return;
 
     if (!hasFilters) {
@@ -913,7 +932,7 @@ async function updateFilteredResults(type) {
 function clearFilters(type) {
     activeFilters[type] = { genres: [], country: '' };
     
-    const viewId = type === 'movie' ? 'home-view' : 'tv-shows-view';
+    const viewId = type === 'movie' ? 'movies-view' : 'tv-shows-view';
     const container = document.getElementById(viewId);
     
     container.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
@@ -921,7 +940,7 @@ function clearFilters(type) {
     const clearBtn = container.querySelector('.clear-btn');
     if (clearBtn) clearBtn.style.display = 'none';
     
-    const groupID = type === 'movie' ? 'country-filter-group' : 'tv-country-filter-group';
+    const groupID = type === 'movie' ? 'movie-country-filter-group' : 'tv-country-filter-group';
     const btn = document.getElementById(groupID).querySelector('.filter-btn');
     btn.innerHTML = `Country <i class="fas fa-chevron-down"></i>`;
 

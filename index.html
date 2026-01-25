@@ -23,7 +23,7 @@
         <ul class="nav-links">
           <li><a href="#" class="active" id="nav-home">Home</a></li>
           <li><a href="#" id="nav-tv">TV Shows</a></li>
-          <li><a href="#">Movies</a></li>
+          <li><a href="#" id="nav-movies">Movies</a></li>
           <li><a href="#">New & Popular</a></li>
           <li><a href="#" id="nav-mylist">My List</a></li>
         </ul>
@@ -76,36 +76,57 @@
         </section>
 
         <section class="movie-section" id="trending-now-section">
-          <div class="filter-controls">
-            <div class="filter-group" id="genre-filter-group">
-              <button class="filter-btn" onclick="toggleDropdown('genre-dropdown')">
-                Genre <i class="fas fa-chevron-down"></i>
-              </button>
-              <div id="genre-dropdown" class="filter-dropdown">
-                <div class="dropdown-content" id="genre-list">
-                  <!-- Genres injected here -->
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-group" id="country-filter-group">
-              <button class="filter-btn" onclick="toggleDropdown('country-dropdown')">
-                Country <i class="fas fa-chevron-down"></i>
-              </button>
-              <div id="country-dropdown" class="filter-dropdown">
-                <div class="dropdown-content" id="country-list">
-                  <!-- Countries injected here -->
-                </div>
-              </div>
-            </div>
-
-            <button id="clear-filters-btn" class="clear-btn" style="display: none;">Clear Filters</button>
-          </div>
 
           <h2 class="section-title">Trending Now</h2>
           <div class="movie-row" id="popular-row">
             <!-- Movie cards injected here -->
           </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Movies View (Hidden by default) -->
+    <div id="movies-view" style="display: none;">
+      <header class="hero" id="movies-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">Movies</h1>
+          <p class="hero-description">
+            Explore our vast collection of films from every corner of the globe. Use filters to find your next favorite story.
+          </p>
+        </div>
+        <div class="hero-fade-bottom"></div>
+      </header>
+
+      <main class="main-container">
+        <div class="filter-controls" style="margin-bottom: 20px;">
+          <div class="filter-group" id="movie-genre-filter-group">
+            <button class="filter-btn" onclick="toggleDropdown('movie-genre-dropdown')">
+              Genre <i class="fas fa-chevron-down"></i>
+            </button>
+            <div id="movie-genre-dropdown" class="filter-dropdown">
+              <div class="dropdown-content" id="movie-genre-list">
+                <!-- Movie Genres injected here -->
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group" id="movie-country-filter-group">
+            <button class="filter-btn" onclick="toggleDropdown('movie-country-dropdown')">
+              Country <i class="fas fa-chevron-down"></i>
+            </button>
+            <div id="movie-country-dropdown" class="filter-dropdown">
+              <div class="dropdown-content" id="movie-country-list">
+                <!-- Countries injected here -->
+              </div>
+            </div>
+          </div>
+
+          <button id="movie-clear-filters-btn" class="clear-btn" style="display: none;">Clear Filters</button>
+        </div>
+
+        <section class="movie-section">
+          <h2 class="section-title">Popular Movies</h2>
+          <div class="movie-row" id="movies-popular-row"></div>
         </section>
       </main>
     </div>
