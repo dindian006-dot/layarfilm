@@ -155,30 +155,72 @@
       </header>
 
       <main class="main-container">
-        <section class="movie-section">
-          <h2 class="section-title">Trending Anime</h2>
-          <div class="movie-row" id="anime-trending-row"></div>
-        </section>
+        <!-- Tab Bar -->
+        <div class="tabs-container" style="margin-top: -30px; position: relative; z-index: 10;">
+          <button class="tab-btn active" onclick="switchAnimeTab('overview', this)">Overview</button>
+          <button class="tab-btn" onclick="switchAnimeTab('upcoming', this)">Upcoming</button>
+          <button class="tab-btn" onclick="switchAnimeTab('collections', this)">Special Picks</button>
+        </div>
 
-        <section class="movie-section">
-          <h2 class="section-title">Popular Anime</h2>
-          <div class="movie-row" id="anime-popular-row"></div>
-        </section>
+        <!-- Overview Section (Default) -->
+        <div id="anime-overview-content">
+          <section class="movie-section">
+            <h2 class="section-title">Trending Anime</h2>
+            <div class="movie-row" id="anime-trending-row"></div>
+          </section>
 
-        <section class="movie-section">
-          <h2 class="section-title">Airing Now (MAL)</h2>
-          <div class="movie-row" id="anime-seasonal-row"></div>
-        </section>
+          <section class="movie-section">
+            <h2 class="section-title">Popular Anime</h2>
+            <div class="movie-row" id="anime-popular-row"></div>
+          </section>
 
-        <section class="movie-section">
-          <h2 class="section-title">Top Rated (MAL)</h2>
-          <div class="movie-row" id="anime-top-row"></div>
-        </section>
+          <section class="movie-section">
+            <h2 class="section-title">Airing Now (MAL)</h2>
+            <div class="movie-row" id="anime-seasonal-row"></div>
+          </section>
 
-        <section class="movie-section">
-          <h2 class="section-title">New Releases</h2>
-          <div class="movie-row" id="anime-new-row"></div>
-        </section>
+          <section class="movie-section">
+            <h2 class="section-title">Top Rated (MAL)</h2>
+            <div class="movie-row" id="anime-top-row"></div>
+          </section>
+
+          <section class="movie-section">
+            <h2 class="section-title">New Releases</h2>
+            <div class="movie-row" id="anime-new-row"></div>
+          </section>
+        </div>
+
+        <!-- Upcoming Section -->
+        <div id="anime-upcoming-content" style="display: none; padding-top: 20px;">
+          <section class="movie-section">
+            <h2 class="section-title">Upcoming Anime (MAL)</h2>
+            <div class="search-results-grid" id="anime-upcoming-grid"></div>
+          </section>
+        </div>
+
+        <!-- Special Collections Section -->
+        <div id="anime-collections-content" style="display: none; padding-top: 20px;">
+          <section class="movie-section">
+            <h2 class="section-title">Top ONA</h2>
+            <div class="movie-row" id="anime-ona-row"></div>
+          </section>
+          <section class="movie-section">
+            <h2 class="section-title">Top Anime Movies</h2>
+            <div class="movie-row" id="anime-movies-row"></div>
+          </section>
+          <section class="movie-section">
+            <h2 class="section-title">Bleach Collection</h2>
+            <div class="movie-row" id="anime-bleach-row"></div>
+          </section>
+          <section class="movie-section">
+            <h2 class="section-title">Neon Genesis Evangelion</h2>
+            <div class="movie-row" id="anime-evangelion-row"></div>
+          </section>
+          <section class="movie-section">
+            <h2 class="section-title">Spring 2012 Classics</h2>
+            <div class="movie-row" id="anime-2012-row"></div>
+          </section>
+        </div>
       </main>
     </div>
 

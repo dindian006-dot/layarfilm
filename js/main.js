@@ -1217,3 +1217,77 @@ async function handleJikanClick(item) {
         console.error("Bridge search error:", error);
     }
 }
+
+// --- Expanded Anime Content ---
+
+function switchAnimeTab(tab, btn) {
+    // Update Tab UI
+    const container = btn.parentElement;
+    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Toggle Content Containers
+    document.getElementById('anime-overview-content').style.display = tab === 'overview' ? 'block' : 'none';
+    document.getElementById('anime-upcoming-content').style.display = tab === 'upcoming' ? 'block' : 'none';
+    document.getElementById('anime-collections-content').style.display = tab === 'collections' ? 'block' : 'none';
+
+    // Trigger Loads
+    if (tab === 'upcoming') fetchAnimeUpcoming();
+    if (tab === 'collections') fetchAnimeCollections();
+}
+
+async function fetchAnimeUpcoming() {
+    const grid = document.getElementById("anime-upcoming-grid");
+    if (grid.children.length > 0 && !grid.querySelector('.skeleton')) return; // Already loaded
+
+    grid.innerHTML = Array(12).fill('<div class="movie-card skeleton" style="height:250px;"></div>').join('');
+
+    try {
+        const response = await fetch(`${JIKAN_BASE_URL}/seasons/upcoming`);
+        const data = await response.json();
+        const results = data.data || [];
+
+        grid.innerHTML = "";
+        results.slice(0, 24).forEach(item => {
+            const card = createJikanCard(item);
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error("Upcoming Anime error:", error);
+        grid.innerHTML = '<p class="error-msg">Failed to load upcoming anime.</p>';
+    }
+}
+
+async function fetchAnimeCollections() {
+    // Only load if empty
+    if (document.getElementById("anime-ona-row").children.length > 0) return;
+
+    // Endpoints provided by user
+    const collectionMap = [
+        { id: 'anime-ona-row', url: `${JIKAN_BASE_URL}/top/anime?type=ona` },
+        { id: 'anime-movies-row', url: `${JIKAN_BASE_URL}/top/anime?type=movie` },
+        { id: 'anime-bleach-row', url: `${JIKAN_BASE_URL}/anime?q=bleach&sfw` },
+        { id: 'anime-evangelion-row', url: `${JIKAN_BASE_URL}/anime?q=%E6%96%B0%E4%B8%96%E7%B4%80&sfw` },
+        { id: 'anime-2012-row', url: `${JIKAN_BASE_URL}/seasons/2012/spring?sfw` }
+    ];
+
+    collectionMap.forEach(async (collection) => {
+        const row = document.getElementById(collection.id);
+        row.innerHTML = '<div class="skeleton-container" style="display:flex; gap:20px;">' + Array(6).fill('<div class="movie-card skeleton" style="height:250px; width:160px; flex-shrink:0;"></div>').join('') + '</div>';
+        
+        try {
+            const response = await fetch(collection.url);
+            const data = await response.json();
+            const results = data.data || [];
+
+            row.innerHTML = "";
+            results.slice(0, 15).forEach(item => {
+                const card = createJikanCard(item);
+                row.appendChild(card);
+            });
+        } catch (error) {
+            console.error(`Collection ${collection.id} error:`, error);
+            row.innerHTML = '<p class="error-msg">Failed to load collection.</p>';
+        }
+    });
+}
