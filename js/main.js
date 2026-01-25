@@ -18,6 +18,10 @@ const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 // GogoAnime API (anbuanime) Configuration
 const GOGO_API_URL = "https://anbuanime.onrender.com";
 
+// RapidAPI (Streaming Availability) Configuration
+const RAPID_API_KEY = "765861946bmsha0d319703ab7c2ap1ebea3jsn2d5ecb73ee12";
+const RAPID_API_HOST = "streaming-availability.p.rapidapi.com";
+
 // Endpoints
 const ENDPOINTS = {
   trending: `${BASE_URL}/trending/movie/week?api_key=${API_KEY}`,
@@ -35,7 +39,8 @@ const loadedContent = {
     movies: false,
     tv: false,
     anime: false,
-    animeCollections: false
+    animeCollections: false,
+    rapidMovies: false
 };
 let activeFilters = {
     movie: { genres: [], country: '' },
@@ -1344,6 +1349,147 @@ async function fetchAnimeCollections() {
         }
     }
 }
+
+// --- Recently Available (RapidAPI) ---
+
+function switchMoviesTab(tab, btn) {
+    // Update Tab UI
+    const container = btn.parentElement;
+    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Toggle Content
+    document.getElementById('movies-popular-content').style.display = tab === 'popular' ? 'block' : 'none';
+    document.querySelector('.filter-controls').style.display = tab === 'popular' ? 'flex' : 'none'; // Hide filters for rapid tab
+    document.getElementById('movies-recent-content').style.display = tab === 'recent' ? 'block' : 'none';
+
+    if (tab === 'recent') fetchRecentlyAvailable();
+}
+
+async function fetchRecentlyAvailable() {
+    // Check Cache
+    const cacheKey = 'rapid_recent_data';
+    const cached = localStorage.getItem(cacheKey);
+    const grid = document.getElementById("movies-recent-grid");
+
+    if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        const now = Date.now();
+        // 24 Hours = 24 * 60 * 60 * 1000 = 86400000 ms
+        if (now - timestamp < 86400000) {
+            console.log("Using cached RapidAPI data");
+            renderRapidResults(data);
+            return;
+        }
+    }
+
+    // Fetch New Data
+    console.log("Fetching new RapidAPI data...");
+    grid.innerHTML = '<div class="loading-results">Loading streaming data...</div>';
+
+    const url = `https://${RAPID_API_HOST}/shows/search/filters?country=us&show_type=movie&order_by=popularity_1month&catalogs=netflix,prime,disney,hbo,hulu,peacock,paramount,starz,showtime,apple,mubi&limit=30`;
+    
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-RapidAPI-Key': RAPID_API_KEY,
+                'X-RapidAPI-Host': RAPID_API_HOST
+            }
+        });
+
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        const result = await response.json();
+        const movies = result.shows || [];
+
+        // Save to Cache
+        localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: movies
+        }));
+
+        renderRapidResults(movies);
+
+    } catch (error) {
+        console.error("RapidAPI Fetch Error:", error);
+        grid.innerHTML = '<p class="error-msg">Unable to load last seen movies.</p>';
+    }
+}
+
+function renderRapidResults(movies) {
+    const grid = document.getElementById("movies-recent-grid");
+    grid.innerHTML = "";
+
+    if (movies.length === 0) {
+        grid.innerHTML = '<p class="empty-list-msg">No recent movies found.</p>';
+        return;
+    }
+
+    movies.forEach(item => {
+        const card = createRapidCard(item);
+        grid.appendChild(card);
+    });
+}
+
+function createRapidCard(item) {
+    const card = document.createElement("div");
+    card.className = "movie-card";
+
+    const title = item.title;
+    // Prefer vertical poster options if available, RapidAPI usually gives 'size' options in images
+    // item.imageSet.verticalPoster.w480 or similar.
+    // Adjust based on actual API response structure. 
+    // Usually: item.imageSet.verticalPoster.w600/w720 etc.
+    const poster = (item.imageSet && item.imageSet.verticalPoster && item.imageSet.verticalPoster.w600) 
+                   || (item.imageSet && item.imageSet.verticalPoster && item.imageSet.verticalPoster.w720) 
+                   || "https://via.placeholder.com/500x750?text=No+Image";
+
+    // Extract Platforms (limit 3)
+    let platforms = "";
+    if (item.streamingOptions && item.streamingOptions.us) {
+        const services = item.streamingOptions.us.map(s => s.service.id).filter((v, i, a) => a.indexOf(v) === i); // unique
+        services.slice(0, 3).forEach(svc => {
+            // Map service ID to readable name or icon if poss.
+            // Simplified: just text badge
+            platforms += `<span style="background:var(--netflix-red); color:#fff; font-size:9px; padding:2px 4px; border-radius:3px; margin-right:3px; text-transform:uppercase;">${svc}</span>`;
+        });
+    }
+
+    card.innerHTML = `
+        <img src="${poster}" alt="${title}" loading="lazy">
+        <div class="card-overlay">
+            <div class="card-info">
+                <h3>${title}</h3>
+                <div style="margin-top:5px;">${platforms}</div>
+            </div>
+        </div>
+    `;
+
+    card.addEventListener("click", () => {
+        // Bridge to TMDB: item.tmdbId is usually provided by this API
+        if (item.tmdbId) {
+            // Fetch TMDB details using ID
+            fetchMovieById(item.tmdbId);
+        } else {
+            // Fallback search
+            handleSearch(title); 
+        }
+    });
+
+    return card;
+}
+
+async function fetchMovieById(id) {
+    try {
+        const res = await fetch(`${BASE_URL}/movie/${id}?api_key=${API_KEY}`);
+        const data = await res.json();
+        openModal(data, 'movie');
+    } catch (e) {
+        console.error("TMDB Fetch Error", e);
+    }
+}
+
 // --- GogoAnime Integration ---
 
 async function fetchGogoRecentEpisodes() {
