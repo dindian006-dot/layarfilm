@@ -24,7 +24,7 @@
           <li><a href="#" class="active" id="nav-home">Home</a></li>
           <li><a href="#" id="nav-tv">TV Shows</a></li>
           <li><a href="#" id="nav-movies">Movies</a></li>
-          <li><a href="#">New & Popular</a></li>
+          <li><a href="#" id="nav-popular">New & Popular</a></li>
           <li><a href="#" id="nav-mylist">My List</a></li>
         </ul>
       </div>
@@ -136,6 +136,20 @@
       <section class="movie-section">
         <h2 class="section-title" id="search-query-title">Search Results</h2>
         <div class="search-results-grid" id="search-results-grid">
+          <!-- Results injected here -->
+        </div>
+      </section>
+    </div>
+
+    <!-- New & Popular View (Hidden by default) -->
+    <div id="popular-view" style="display: none; padding-top: 100px; min-height: 80vh;">
+      <section class="movie-section">
+        <div class="tabs-container">
+          <button class="tab-btn active" data-tab="week">This Week</button>
+          <button class="tab-btn" data-tab="month">This Month</button>
+          <button class="tab-btn" data-tab="new">New Releases</button>
+        </div>
+        <div class="search-results-grid" id="popular-grid">
           <!-- Results injected here -->
         </div>
       </section>

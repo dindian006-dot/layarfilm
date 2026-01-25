@@ -19,6 +19,8 @@ const ENDPOINTS = {
   search: `${BASE_URL}/search/multi?api_key=${API_KEY}`,
   tvTrending: `${BASE_URL}/trending/tv/week?api_key=${API_KEY}`,
   tvPopular: `${BASE_URL}/tv/popular?api_key=${API_KEY}`,
+  movieNowPlaying: `${BASE_URL}/movie/now_playing?api_key=${API_KEY}`,
+  tvOnTheAir: `${BASE_URL}/tv/on_the_air?api_key=${API_KEY}`,
 };
 
 // Global State
@@ -246,22 +248,32 @@ function setupNavigation() {
     setActiveLink(navMyList);
     renderMyList();
   });
+
+  const navPopular = document.getElementById("nav-popular");
+  navPopular.addEventListener("click", (e) => {
+    e.preventDefault();
+    showView("popular");
+    setActiveLink(navPopular);
+    initPopularApp();
+  });
 }
 
 function showView(viewName) {
   const homeContent = document.getElementById("homepage-content");
   const movieContent = document.getElementById("movies-view");
   const tvContent = document.getElementById("tv-shows-view");
+  const popularContent = document.getElementById("popular-view");
   const searchView = document.getElementById("search-view");
   const mylistView = document.getElementById("mylist-view");
 
   homeContent.style.display = viewName === "homepage" ? "block" : "none";
   movieContent.style.display = viewName === "movies" ? "block" : "none";
   tvContent.style.display = viewName === "tv" ? "block" : "none";
+  popularContent.style.display = viewName === "popular" ? "block" : "none";
   searchView.style.display = viewName === "search" ? "block" : "none";
   mylistView.style.display = viewName === "mylist" ? "block" : "none";
 
-  if (viewName === "homepage" || viewName === "movies" || viewName === "tv") {
+  if (viewName === "homepage" || viewName === "movies" || viewName === "tv" || viewName === "popular") {
     document.getElementById("search-input").value = "";
   }
 }
@@ -953,4 +965,82 @@ function clearFilters(type) {
     if (filterSection) filterSection.remove();
     
     mainContainer.querySelectorAll('.movie-section').forEach(row => row.style.display = 'block');
+}
+
+// --- New & Popular Logic ---
+
+async function initPopularApp() {
+    // Setup Tab Listeners
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    tabBtns.forEach(btn => {
+        btn.onclick = (e) => {
+            tabBtns.forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
+            fetchPopularTabData(e.target.dataset.tab);
+        };
+    });
+
+    // Default to 'week' tab if not already loaded
+    if (!loadedContent.popular) {
+        fetchPopularTabData('week');
+        loadedContent.popular = true;
+    }
+}
+
+async function fetchPopularTabData(tab) {
+    const grid = document.getElementById("popular-grid");
+    
+    // Show Skeletons
+    grid.innerHTML = Array(12).fill('<div class="movie-card skeleton" style="height:250px;"></div>').join('');
+
+    let endpoints = [];
+    if (tab === 'week') {
+        endpoints = [ENDPOINTS.trending, ENDPOINTS.tvTrending];
+    } else if (tab === 'month') {
+        endpoints = [ENDPOINTS.popular, ENDPOINTS.tvPopular];
+    } else if (tab === 'new') {
+        endpoints = [ENDPOINTS.movieNowPlaying, ENDPOINTS.tvOnTheAir];
+    }
+
+    try {
+        const responses = await Promise.all(endpoints.map(url => fetch(url)));
+        const dataObjects = await Promise.all(responses.map(res => res.json()));
+        
+        // Merge results
+        let combined = [];
+        dataObjects.forEach((data, index) => {
+            const results = data.results || [];
+            // Track type if not provided (index 0 is always movie endpoint in our definitions above, but trending-multi is different)
+            // Let's be explicit based on endpoint name or structure
+            const type = endpoints[index].includes('/tv/') || endpoints[index].includes('/trending/tv/') ? 'tv' : 'movie';
+            
+            results.forEach(item => {
+                combined.push({ ...item, media_type: item.media_type || type });
+            });
+        });
+
+        // Sort by popularity
+        combined.sort((a, b) => b.popularity - a.popularity);
+
+        // Render
+        renderPopularResults(combined);
+    } catch (error) {
+        console.error("Error fetching popular data:", error);
+        grid.innerHTML = '<p class="error-msg">Unable to load popular content. Please try again later.</p>';
+    }
+}
+
+function renderPopularResults(results) {
+    const grid = document.getElementById("popular-grid");
+    grid.innerHTML = "";
+
+    if (!results || results.length === 0) {
+        grid.innerHTML = '<p class="empty-list-msg">No results found.</p>';
+        return;
+    }
+
+    results.forEach(item => {
+        const card = createContentCard(item, item.media_type);
+        grid.appendChild(card);
+    });
 }

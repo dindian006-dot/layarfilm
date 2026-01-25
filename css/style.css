@@ -803,6 +803,46 @@ body {
     background-position: -200% 0;
   }
 }
+
+/* Tabs Styling */
+.tabs-container {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  padding-left: 4%;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 0;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.tab-btn:hover {
+  color: #fff;
+}
+
+.tab-btn.active {
+  color: #fff;
+}
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -11px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: var(--netflix-red);
+}
 /* Filter Controls */
 .filter-controls {
   display: flex;
