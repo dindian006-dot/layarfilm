@@ -1369,10 +1369,10 @@ async function fetchDramaBoxMovies() {
     grid.innerHTML = '<div class="loading-results">Loading DramaBox trending...</div>';
 
     try {
-        console.log("🎬 Fetching DramaBox Trending...");
+        console.log("🎬 Fetching DramaBox Latest (ID)...");
         
-        // Use the 'trending' endpoint provided by user
-        const response = await fetch(`${MEGAWE_API_BASE}/trending`);
+        // Use the 'latest' endpoint with Indonesian language
+        const response = await fetch(`${MEGAWE_API_BASE}/latest?lang=in`);
         
         if (!response.ok) {
             throw new Error(`API Error: ${response.status}`);
@@ -1416,7 +1416,7 @@ function createDramaBoxCard(item) {
     card.className = "movie-card";
 
     // Adjust field names based on API response inspection
-    const title = item.title || item.name || "Unknown Title";
+    const title = item.bookName || item.title || item.name || "Unknown Title";
     const poster = item.cover || item.poster || item.image || "https://via.placeholder.com/500x750?text=No+Image";
     const status = item.status || "Ongoing";
 
