@@ -18,9 +18,8 @@ const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 // GogoAnime API (anbuanime) Configuration
 const GOGO_API_URL = "https://anbuanime.onrender.com";
 
-// LK21 API Configuration (Anabot)
-const LK21_API_URL = "https://anabot.my.id/api";
-const LK21_API_KEY = "zVr6RiOFme";
+// MegaWe (DramaBox) API Configuration
+const MEGAWE_API_BASE = "https://api.megawe.net/api/dramabox";
 
 // Endpoints
 const ENDPOINTS = {
@@ -1349,7 +1348,7 @@ async function fetchAnimeCollections() {
     }
 }
 
-// --- LK21 API Integration ---
+// --- DramaBox Integration (MegaWe) ---
 
 function switchMoviesTab(tab, btn) {
     // Update Tab UI
@@ -1360,66 +1359,66 @@ function switchMoviesTab(tab, btn) {
     // Toggle Content
     document.getElementById('movies-popular-content').style.display = tab === 'popular' ? 'block' : 'none';
     document.querySelector('.filter-controls').style.display = tab === 'popular' ? 'flex' : 'none';
-    document.getElementById('movies-lk21-content').style.display = tab === 'lk21' ? 'block' : 'none';
+    document.getElementById('movies-dramabox-content').style.display = tab === 'dramabox' ? 'block' : 'none';
 
-    if (tab === 'lk21') fetchLK21Movies();
+    if (tab === 'dramabox') fetchDramaBoxMovies();
 }
 
-async function fetchLK21Movies() {
-    const grid = document.getElementById("movies-lk21-grid");
-    
-    grid.innerHTML = '<div class="loading-results">Loading LK21 movies...</div>';
+async function fetchDramaBoxMovies() {
+    const grid = document.getElementById("movies-dramabox-grid");
+    grid.innerHTML = '<div class="loading-results">Loading DramaBox trending...</div>';
 
     try {
-        console.log("🎬 Fetching LK21 movies from Anabot API...");
+        console.log("🎬 Fetching DramaBox Trending...");
         
-        // Using search endpoint with popular query
-        const response = await fetch(`${LK21_API_URL}/search/lk21?q=marvel&apikey=${LK21_API_KEY}`);
+        // Use the 'trending' endpoint provided by user
+        const response = await fetch(`${MEGAWE_API_BASE}/trending`);
         
         if (!response.ok) {
             throw new Error(`API Error: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log("✅ LK21 data received:", data);
+        const result = await response.json();
+        console.log("✅ DramaBox data received:", result);
         
-        // Anabot API structure: { status, data: [...] }
-        const movies = data.data || data.results || [];
-        renderLK21Results(movies);
+        // Inspect response structure
+        // Assuming array or { data: [...] }
+        const items = Array.isArray(result) ? result : (result.data || result.results || []);
+        
+        renderDramaBoxResults(items);
 
     } catch (error) {
-        console.error("❌ LK21 API Error:", error);
+        console.error("❌ MegaWe API Error:", error);
         grid.innerHTML = `<div style="text-align:center; padding:20px;">
-                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load LK21 movies.</p>
+                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load DramaBox content.</p>
                             <p style="color:#aaa; font-size:0.9rem;">${error.message}</p>
-                            <p style="color:#666; font-size:0.8rem; margin-top:10px;">API: anabot.my.id</p>
                           </div>`;
     }
 }
 
-function renderLK21Results(movies) {
-    const grid = document.getElementById("movies-lk21-grid");
+function renderDramaBoxResults(items) {
+    const grid = document.getElementById("movies-dramabox-grid");
     grid.innerHTML = "";
 
-    if (movies.length === 0) {
-        grid.innerHTML = '<p class="empty-list-msg">No movies found.</p>';
+    if (!items || items.length === 0) {
+        grid.innerHTML = '<p class="empty-list-msg">No dramas found.</p>';
         return;
     }
 
-    movies.forEach(item => {
-        const card = createLK21Card(item);
+    items.forEach(item => {
+        const card = createDramaBoxCard(item);
         grid.appendChild(card);
     });
 }
 
-function createLK21Card(item) {
+function createDramaBoxCard(item) {
     const card = document.createElement("div");
     card.className = "movie-card";
 
-    const title = item.title || item.name;
-    const poster = item.poster || item.thumbnail || "https://via.placeholder.com/500x750?text=No+Image";
-    const rating = item.rating || "N/A";
-    const year = item.year || "";
+    // Adjust field names based on API response inspection
+    const title = item.title || item.name || "Unknown Title";
+    const poster = item.cover || item.poster || item.image || "https://via.placeholder.com/500x750?text=No+Image";
+    const status = item.status || "Ongoing";
 
     card.innerHTML = `
         <img src="${poster}" alt="${title}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
@@ -1427,19 +1426,17 @@ function createLK21Card(item) {
             <div class="card-info">
                 <h3>${title}</h3>
                 <div style="margin-top:5px; display:flex; gap:10px; align-items:center;">
-                    <span style="color:#ffd700;">⭐ ${rating}</span>
-                    ${year ? `<span style="color:#aaa;">${year}</span>` : ''}
-                    <span style="background:var(--netflix-red); color:#fff; font-size:9px; padding:2px 6px; border-radius:3px;">ID SUB</span>
+                    <span style="background:var(--netflix-red); color:#fff; font-size:9px; padding:2px 6px; border-radius:3px;">DRAMA</span>
+                    <span style="color:#aaa; font-size:0.8rem;">${status}</span>
                 </div>
             </div>
         </div>
     `;
 
     card.addEventListener("click", () => {
-        // Try to search on TMDB for modal details
-        if (title) {
-            handleSearch(title);
-        }
+        // Since we don't have details logic yet, maybe search TMDB or show alert
+        console.log("Clicked drama:", item);
+        handleSearch(title); // Bridge to TMDB search
     });
 
     return card;
