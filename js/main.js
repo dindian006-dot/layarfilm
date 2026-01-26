@@ -15,8 +15,9 @@ const WATCHMODE_BASE_URL = "https://api.watchmode.com/v1";
 // Jikan API (MAL) Configuration
 const JIKAN_BASE_URL = "https://api.jikan.moe/v4";
 
-// GogoAnime API (anbuanime) Configuration
-const GOGO_API_URL = "https://anbuanime.onrender.com";
+// Kinocheck API Configuration
+const KINOCHECK_API_KEY = "VHXLdZ0gM4DzArrVOtCkmxyiSbaxQi7IBpYa6RSkFpGKCvwLg5uUznWFUcX1KhNI";
+const KINOCHECK_BASE_URL = "https://api.kinocheck.com";
 
 // Endpoints
 const ENDPOINTS = {
@@ -1345,7 +1346,159 @@ async function fetchAnimeCollections() {
     }
 }
 
-// --- GogoAnime Integration ---
+// --- Kinocheck Integration (Currently Streaming) ---
+
+function switchMoviesTab(tab, btn) {
+    // Update Tab UI
+    const container = btn.parentElement;
+    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Toggle Content
+    document.getElementById('movies-popular-content').style.display = tab === 'popular' ? 'block' : 'none';
+    document.querySelector('.filter-controls').style.display = tab === 'popular' ? 'flex' : 'none';
+    document.getElementById('movies-streaming-content').style.display = tab === 'streaming' ? 'block' : 'none';
+
+    if (tab === 'streaming') fetchKinocheckStreaming();
+}
+
+async function fetchKinocheckStreaming() {
+    const grid = document.getElementById("movies-streaming-grid");
+    
+    // Check Cache (5 minutes)
+    const cacheKey = 'kinocheck_streaming';
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minutes
+            console.log("✅ Using cached Kinocheck data");
+            renderKinocheckResults(data);
+            return;
+        }
+    }
+
+    grid.innerHTML = '<div class="loading-results">Loading streaming availability...</div>';
+
+    try {
+        console.log("🎬 Fetching Kinocheck data...");
+        // Use 'trailers' endpoint to get list (Acting as proxy for streaming availability/new movies)
+        // Trying 'Streaming' category based on user request context. 
+        // If empty, we might need 'Trailer' category.
+        const response = await fetch(`${KINOCHECK_BASE_URL}/trailers?categories=Streaming&apikey=${KINOCHECK_API_KEY}&limit=20`);
+        
+        if (!response.ok) {
+            throw new Error(`Kinocheck API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("✅ Kinocheck Raw Data:", data);
+
+        // Kinocheck returns a flat object with dynamic keys or 'trailers' array?
+        // Usually it returns { trailers: [...] } or just the object.
+        // We'll normalize it.
+        let movies = data.trailers || data.results || (Array.isArray(data) ? data : Object.values(data));
+        
+        // Filter out items without TMDB/IMDB ID
+        movies = movies.filter(m => m.tmdb_id || m.imdb_id).slice(0, 20);
+
+        if (movies.length === 0) {
+           grid.innerHTML = '<p class="empty-list-msg">No streaming data available at the moment.</p>';
+           return;
+        }
+
+        // Enrich with TMDB Data
+        console.log("🔄 Enriching with TMDB metadata...");
+        const enrichedMovies = await Promise.all(movies.map(async (kinoItem) => {
+            try {
+                // Fetch TMDB Details
+                // If we have tmdb_id, query /movie. If imdb_id, /find.
+                let tmdbData = null;
+                if (kinoItem.tmdb_id) {
+                    const tmdbRes = await fetch(`${BASE_URL}/movie/${kinoItem.tmdb_id}?api_key=${API_KEY}`);
+                    if (tmdbRes.ok) tmdbData = await tmdbRes.json();
+                } else if (kinoItem.imdb_id) {
+                    const findRes = await fetch(`${BASE_URL}/find/${kinoItem.imdb_id}?api_key=${API_KEY}&external_source=imdb_id`);
+                    const findData = await findRes.json();
+                    if (findData.movie_results && findData.movie_results.length > 0) {
+                        tmdbData = findData.movie_results[0];
+                    }
+                }
+
+                if (!tmdbData) return null;
+
+                // Merge Data
+                return {
+                    id: tmdbData.id,
+                    title: tmdbData.title || kinoItem.title,
+                    poster_path: tmdbData.poster_path, // TMDB Poster is better
+                    vote_average: tmdbData.vote_average,
+                    release_date: tmdbData.release_date || kinoItem.year,
+                    kino_streaming: true // Badge marker
+                };
+
+            } catch (e) {
+                console.warn("Skipping item", kinoItem, e);
+                return null;
+            }
+        }));
+
+        const validMovies = enrichedMovies.filter(m => m !== null);
+        
+        // Save Cache
+        localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: validMovies
+        }));
+
+        renderKinocheckResults(validMovies);
+
+    } catch (error) {
+        console.error("❌ Kinocheck Error:", error);
+        grid.innerHTML = `<div style="text-align:center; padding:20px;">
+                            <p class="error-msg" style="color:var(--netflix-red); font-size:1.1rem; margin-bottom:10px;">Unable to load currently streaming movies.</p>
+                            <p style="color:#aaa; font-size:0.9rem;">${error.message}</p>
+                          </div>`;
+    }
+}
+
+function renderKinocheckResults(movies) {
+    const grid = document.getElementById("movies-streaming-grid");
+    grid.innerHTML = "";
+
+    movies.forEach(movie => {
+        const card = createMovieCard(movie);
+        
+        // Add "Currently Streaming" Badge
+        const badge = document.createElement("div");
+        badge.style.cssText = `
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--netflix-red);
+            color: white;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 2;
+        `;
+        badge.innerText = "STREAMING";
+        
+        // Insert badge into the image container (first child)
+        if (card.firstChild) {
+            // Need relative positioning for badge
+             // Card structure is: div.movie-card -> img, div.card-overlay
+             // Actually createMovieCard returns the div.
+             // We can just append to card, but position relative is needed.
+             // movie-card class handles position relative usually.
+             card.appendChild(badge);
+        }
+        
+        grid.appendChild(card);
+    });
+}
 
 async function fetchGogoRecentEpisodes() {
     const row = document.getElementById("anime-gogo-recent");
