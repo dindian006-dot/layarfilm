@@ -6,6 +6,246 @@
   --white: #ffffff;
   --nav-bg: rgba(0, 0, 0, 0);
   --transition: all 0.3s ease;
+  /* Theme tokens (dark by default) */
+  --bg-primary: #141414;
+  --bg-secondary: #181818;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #808080;
+  --card-bg: #181818;
+  --navbar-scrolled-bg: #141414;
+  --modal-bg: #141414;
+  --dropdown-bg: #141414;
+  --search-bg: rgba(0,0,0,0.4);
+  --border-color: rgba(255,255,255,0.1);
+  --footer-bg: transparent;
+}
+
+/* ==================== LIGHT MODE ==================== */
+body.light-mode {
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #e8e8e8;
+  --text-primary: #111111;
+  --text-secondary: #333333;
+  --text-muted: #555555;
+  --card-bg: #dcdcdc;
+  --navbar-scrolled-bg: #e0e0e0;
+  --modal-bg: #f0f0f0;
+  --dropdown-bg: #f0f0f0;
+  --search-bg: rgba(200,200,200,0.7);
+  --border-color: rgba(0,0,0,0.12);
+  --footer-bg: #e0e0e0;
+}
+
+body.light-mode {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Navbar in light mode */
+body.light-mode .navbar {
+  background: linear-gradient(to bottom, rgba(220,220,220,0.95) 10%, rgba(220,220,220,0));
+}
+body.light-mode .navbar.scrolled {
+  background-color: var(--navbar-scrolled-bg);
+}
+body.light-mode .logo {
+  color: var(--netflix-red);
+}
+body.light-mode .nav-links li a {
+  color: #333;
+}
+body.light-mode .nav-links li a:hover,
+body.light-mode .nav-links li a.active {
+  color: #000;
+}
+body.light-mode .search-container {
+  background: var(--search-bg);
+  border-color: rgba(0,0,0,0.2);
+}
+body.light-mode .search-container:focus-within {
+  border-color: #333;
+  background: #fff;
+}
+body.light-mode #search-input {
+  color: #000;
+}
+
+/* Cards in light mode */
+body.light-mode .movie-card {
+  background-color: var(--card-bg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+body.light-mode .card-info h3 {
+  color: #fff; /* stays white over dark overlay on hover */
+}
+
+/* Section titles */
+body.light-mode .section-title {
+  color: #111;
+}
+
+/* Footer */
+body.light-mode .footer {
+  color: var(--text-muted);
+  background: var(--footer-bg);
+}
+body.light-mode .footer-links li a {
+  color: var(--text-muted);
+}
+body.light-mode .footer-links li a:hover {
+  color: var(--text-primary);
+}
+body.light-mode .copyright {
+  color: var(--text-muted);
+}
+
+/* Modal */
+body.light-mode .modal-content {
+  background-color: var(--modal-bg);
+  color: var(--text-primary);
+}
+body.light-mode .modal-info h2 {
+  color: var(--text-primary);
+}
+body.light-mode #modal-overview {
+  color: var(--text-secondary);
+}
+body.light-mode .modal-actors {
+  color: #555;
+}
+body.light-mode .legal-disclaimer {
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+body.light-mode .close-btn {
+  background: rgba(0,0,0,0.2);
+  color: #111;
+}
+
+/* Tabs */
+body.light-mode .tab-btn {
+  color: #555;
+}
+body.light-mode .tab-btn:hover,
+body.light-mode .tab-btn.active {
+  color: #111;
+}
+body.light-mode .tabs-container {
+  border-color: var(--border-color);
+}
+
+/* Filter Dropdowns */
+body.light-mode .filter-btn {
+  background: #fff;
+  color: #111;
+  border-color: rgba(0,0,0,0.3);
+}
+body.light-mode .filter-dropdown {
+  background: var(--dropdown-bg);
+  border-color: var(--border-color);
+}
+body.light-mode .filter-item {
+  color: #444;
+}
+body.light-mode .filter-item:hover {
+  background: rgba(0,0,0,0.05);
+  color: #111;
+}
+
+/* Streaming links */
+body.light-mode .streaming-link {
+  background: rgba(0,0,0,0.08);
+}
+body.light-mode .streaming-link:hover {
+  background: rgba(0,0,0,0.15);
+}
+body.light-mode .streaming-name {
+  color: #111;
+}
+
+/* Empty/error messages */
+body.light-mode .empty-list-msg,
+body.light-mode .error-msg {
+  color: #555;
+}
+
+/* Watchmode section */
+body.light-mode .watchmode-section {
+  border-color: var(--border-color);
+}
+body.light-mode .watchmode-title {
+  color: #444;
+}
+
+/* Recommendations */
+body.light-mode .recommendations-section {
+  border-color: var(--border-color);
+}
+body.light-mode .recommendations-title {
+  color: #111;
+}
+body.light-mode .recommendation-card {
+  background: #ddd;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.7);
+  transform: scale(1.1);
+}
+body.light-mode .theme-toggle-btn {
+  border-color: rgba(0,0,0,0.3);
+  color: #333;
+}
+body.light-mode .theme-toggle-btn:hover {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.6);
+}
+
+/* ==================== INFO PAGE LIGHT MODE OVERRIDES ==================== */
+/* Override inline styles on info pages (about, help, faq, terms, cookies, legal) */
+body.light-mode .navbar[style] {
+  background-color: rgba(235, 235, 235, 0.97) !important;
+}
+body.light-mode main p[style],
+body.light-mode main li[style] {
+  color: #333 !important;
+}
+body.light-mode main h1[style],
+body.light-mode main h2[style],
+body.light-mode main h3[style] {
+  color: #111 !important;
+}
+body.light-mode footer.footer[style] {
+  background-color: #e8e8e8 !important;
+  border-top: 1px solid #ccc !important;
+}
+body.light-mode footer.footer p[style] {
+  color: #555 !important;
+}
+body.light-mode footer.footer a[style] {
+  color: #555 !important;
+}
+body.light-mode footer.footer a[style]:hover {
+  color: #111 !important;
 }
 
 * {
