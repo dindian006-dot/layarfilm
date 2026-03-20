@@ -1,6 +1,6 @@
-# LayarFilm - Netflix Clone
+# LayarFilm -
 
-A high-fidelity Netflix clone built with Vanilla HTML, CSS, and JavaScript.
+A high-fidelity Netflix,imdb,tmdb clone built with Vanilla HTML, CSS, and JavaScript.
 
 ## 🚀 Features
 
@@ -23,4 +23,4 @@ You can view this project live via GitHub Pages (once enabled in your repo setti
 
 ---
 
-_Built with ❤️ by Antigravity_
+_Built with ❤️ by dindian
