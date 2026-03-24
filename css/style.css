@@ -393,6 +393,10 @@ body.light-mode .profile-icon {
   display: block;
 }
 
+.mobile-only {
+  display: none !important;
+}
+
 .profile-box {
   display: flex;
   align-items: center;
@@ -1328,6 +1332,10 @@ body.light-mode .profile-icon {
 
   .search-container {
     margin-right: 5px;
+  }
+
+  .mobile-only {
+    display: block !important;
   }
 }
 
