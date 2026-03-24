@@ -9,14 +9,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar" style="position: fixed; width: 100%; top: 0; z-index: 100; background-color: rgba(20, 20, 20, 0.95); padding: 15px 4%;">
+    <nav class="navbar">
         <div class="nav-left">
             <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
                 <img src="logo.png" alt="LayarFilm Logo" style="height: 30px; margin-right: 10px;">
                 <h1 class="logo" style="margin: 0; color: #e50914; font-size: 1.5rem; font-weight: bold;">LAYARFILM</h1>
             </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html">TV Shows</a></li>
+                <li><a href="index.html">Movies</a></li>
+                <li><a href="index.html">Anime</a></li>
+                <li><a href="index.html">New & Popular</a></li>
+                <li><a href="index.html">My List</a></li>
+            </ul>
         </div>
-        <div style="margin-left: auto;"><button class="theme-toggle-btn" id="theme-toggle-btn"><i class="fas fa-moon"></i></button></div>
+        <div class="nav-right">
+            <button class="theme-toggle-btn" id="theme-toggle-btn" title="Switch to Light Mode">
+              <i class="fas fa-moon"></i>
+            </button>
+            <div class="hamburger-menu" id="hamburger-menu">
+              <i class="fas fa-bars"></i>
+            </div>
+        </div>
     </nav>
 
     <main class="main-container" style="padding: 120px 20px 80px; max-width: 800px; margin: 0 auto; line-height: 1.6;">
@@ -43,3 +58,4 @@
 </body>
 </html>
 <script src="./js/theme.js"></script>
+<script src="./js/mobile-menu.js"></script>
