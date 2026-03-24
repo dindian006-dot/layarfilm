@@ -346,6 +346,53 @@ body.light-mode .hamburger-menu i {
   color: #333;
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.profile-icon {
+  display: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: var(--white);
+}
+
+body.light-mode .profile-icon {
+  color: #333;
+}
+
+.mobile-sub-nav {
+  display: none;
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 10px;
+}
+
+.mobile-sub-nav ul {
+  display: flex;
+  justify-content: space-around;
+  list-style: none;
+  gap: 15px;
+}
+
+.mobile-sub-nav ul li a {
+  text-decoration: none;
+  color: #e5e5e5;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 5px 0;
+}
+
+.mobile-sub-nav ul li.active a {
+  color: var(--white);
+  border-bottom: 2px solid var(--netflix-red);
+}
+
+.desktop-only {
+  display: block;
+}
+
 .profile-box {
   display: flex;
   align-items: center;
@@ -1285,30 +1332,138 @@ body.light-mode .hamburger-menu i {
 }
 
 @media (max-width: 600px) {
-  .nav-right .btn-red {
-    display: none; /* Hide large download button in nav on very small screens */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .navbar {
+    flex-wrap: wrap;
+    padding: 15px 4% 5px;
+    justify-content: space-between;
+    background: var(--black); /* Solid background on mobile */
+  }
+
+  .hamburger-menu {
+    display: flex;
+    order: 1;
+    margin-left: 0;
+    width: auto;
+    height: auto;
+  }
+
+  .logo-container {
+    order: 2;
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .logo {
+    margin-right: 0;
+    font-size: 20px;
+  }
+
+  .logo img {
+    height: 25px !important;
+  }
+
+  .nav-right {
+    order: 3;
+    gap: 15px;
+  }
+
+  .profile-icon {
+    display: block;
+  }
+
+  .mobile-sub-nav {
+    display: block;
+    order: 4;
+  }
+
+  .hero {
+    height: 70vh;
+    background: none;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0 4% 40px;
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Mocking the large poster card from the screenshot */
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    width: 85%;
+    height: 65%;
+    background: url("../assets/images/hero_banner.png") center/cover;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 0;
+  }
+
+  .hero-content {
+    background: rgba(20, 20, 20, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+  }
+
+  .hero-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .hero-description {
+    display: none; /* Hide description to focus on titles and buttons - like mobile apps */
   }
 
   .hero-buttons {
     flex-direction: column;
-    width: 100%;
+    gap: 10px;
   }
 
   .btn {
-    justify-content: center;
     width: 100%;
+    justify-content: center;
+    font-size: 16px;
+    padding: 12px;
   }
 
-  .hero-title {
-    font-size: 1.8rem;
+  .hero-fade-bottom {
+    display: none;
   }
 
-  .modal-info h2 {
-    font-size: 1.8rem;
+  /* Adjust section titles with "See all" */
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    padding-right: 4%;
   }
 
-  #modal-overview {
-    max-width: 100%;
-    font-size: 1rem;
+  .section-title::after {
+    content: "See all";
+    font-size: 0.8rem;
+    color: var(--light-grey);
+    font-weight: normal;
+  }
+
+  .movie-row {
+    padding: 10px 0;
+  }
+
+  .movie-card {
+    min-width: 120px;
+    height: 180px;
   }
 }
