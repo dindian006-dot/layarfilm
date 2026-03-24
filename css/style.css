@@ -205,6 +205,8 @@ body.light-mode .recommendation-card {
   font-size: 1rem;
   transition: all 0.3s ease;
   flex-shrink: 0;
+  margin-left: auto; /* Push to right on desktop */
+  order: 3;
 }
 .theme-toggle-btn:hover {
   background: rgba(255,255,255,0.15);
@@ -1334,25 +1336,41 @@ body.light-mode .profile-icon {
     display: none !important;
   }
 
+  .theme-toggle-btn {
+    order: 1;
+    margin-left: 0;
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
   .logo-container {
     order: 2;
     flex-grow: 1;
     display: flex;
     justify-content: center;
-  }
-
-  .logo {
-    margin-right: 0;
-    font-size: 20px;
-  }
-
-  .logo img {
-    height: 25px !important;
+    margin-left: -35px; /* Offset to keep logo centered despite left button */
   }
 
   .nav-right {
     order: 3;
-    gap: 15px;
+    gap: 10px;
+    flex-grow: 0;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .nav-download-link.mobile-only {
+    color: var(--netflix-red);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 10px;
+    text-transform: lowercase;
+    white-space: nowrap;
+    text-align: right;
+    display: block;
+    width: auto;
+    line-height: 1.2;
   }
 
   .profile-icon {
