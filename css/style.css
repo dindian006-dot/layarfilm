@@ -1360,18 +1360,7 @@ body.light-mode .profile-icon {
     justify-content: flex-end;
   }
 
-  .nav-download-link.mobile-only {
-    color: var(--netflix-red);
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 10px;
-    text-transform: lowercase;
-    white-space: nowrap;
-    text-align: right;
-    display: block;
-    width: auto;
-    line-height: 1.2;
-  }
+
 
   .profile-icon {
     display: block;
@@ -1549,4 +1538,25 @@ body.light-mode .profile-icon {
     min-width: 120px;
     height: 180px;
   }
+}.footer-download-btn {
+  display: inline-block;
+  background-color: var(--netflix-red);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: lowercase;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+}
+
+.footer-download-btn:hover {
+  background-color: #f40612;
+  transform: translateY(-2px);
+}
+
+.footer-download-btn:active {
+  transform: translateY(0);
 }
