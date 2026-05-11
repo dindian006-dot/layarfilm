@@ -394,8 +394,7 @@ body.light-mode .profile-icon {
 .hero {
   height: 80vh;
   background:
-    linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3)),
-    url("../assets/images/hero_banner.png");
+    linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
   background-size: cover;
   background-position: center;
   display: flex;
