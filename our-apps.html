@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Apps - Dindian006 Studio</title>
+  <meta name="description" content="Semua aplikasi premium dari Dindian006 Studio — LayarFilm, Listplay, MusicTunel Lite, MusicTunel Universal. Gratis, tanpa iklan, dan selalu diperbarui." />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script>(function(){var t=localStorage.getItem('layarfilm_theme');if(t==='light'){document.documentElement.style.backgroundColor='#f0f0f0';}})();</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: rgba(255,255,255,0.07);
+      --text: #f0f0f5;
+      --muted: #8888a0;
+      --accent: #e50914;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== NAVBAR ===== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 68px;
+      background: rgba(10,10,15,0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--accent);
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+    .nav-logo img { height: 32px; width: auto; }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-right a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color .2s;
+    }
+    .nav-right a:hover { color: #fff; }
+    .nav-right a.active { color: #fff; font-weight: 600; }
+    .btn-nav-dl {
+      background: var(--accent);
+      color: #fff !important;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem !important;
+    }
+    .btn-nav-dl:hover { background: #c40812 !important; }
+
+    /* ===== HERO ===== */
+    .page-hero {
+      padding: 140px 32px 60px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(229,9,20,0.18), transparent);
+    }
+    .page-hero .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(229,9,20,0.12);
+      border: 1px solid rgba(229,9,20,0.3);
+      color: #ff6b6b;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+    .page-hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      letter-spacing: -1px;
+    }
+    .page-hero h1 span {
+      background: linear-gradient(135deg, #ff4d4d, #ff9a3c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ===== APPS GRID ===== */
+    .apps-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px 100px;
+    }
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
+
+    /* ===== APP CARD ===== */
+    .app-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+      position: relative;
+    }
+    .app-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    /* Card accent glow on hover */
+    .app-card.layarfilm:hover { box-shadow: 0 24px 60px rgba(229,9,20,0.25); border-color: rgba(229,9,20,0.3); }
+    .app-card.listplay:hover  { box-shadow: 0 24px 60px rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.3); }
+    .app-card.mt-lite:hover   { box-shadow: 0 24px 60px rgba(168,85,247,0.25); border-color: rgba(168,85,247,0.3); }
+    .app-card.mt-uni:hover    { box-shadow: 0 24px 60px rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.3); }
+
+    /* Banner area */
+    .card-banner {
+      width: 100%;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .card-banner.layarfilm-bg { background: linear-gradient(135deg, #1a0005 0%, #3d0010 50%, #1a0005 100%); }
+    .card-banner.listplay-bg  { background: linear-gradient(135deg, #010d1f 0%, #023370 50%, #010d1f 100%); }
+    .card-banner.mt-lite-bg   { background: linear-gradient(135deg, #0d0014 0%, #3b1060 50%, #0d0014 100%); }
+    .card-banner.mt-uni-bg    { background: linear-gradient(135deg, #12090 0%, #4a2800 50%, #120900 100%); }
+
+    .card-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 70%);
+    }
+    .card-banner img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* App type badge on banner */
+    .app-type-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 100px;
+      z-index: 2;
+    }
+    .badge-movie { background: rgba(229,9,20,0.25); color: #ff6b6b; border: 1px solid rgba(229,9,20,0.4); }
+    .badge-music { background: rgba(168,85,247,0.25); color: #c084fc; border: 1px solid rgba(168,85,247,0.4); }
+    .badge-music-uni { background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+    .badge-media { background: rgba(59,130,246,0.25); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); }
+
+    /* Card body */
+    .card-body {
+      padding: 22px 22px 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .app-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .app-version {
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: rgba(255,255,255,0.07);
+      padding: 3px 9px;
+      border-radius: 100px;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    .app-desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      margin-bottom: 18px;
+      flex: 1;
+    }
+
+    /* Feature tags */
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 20px;
+    }
+    .tag {
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #bbb;
+    }
+
+    /* Stats row */
+    .card-stats {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* CTA Buttons */
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-download {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all .2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary-red    { background: var(--accent); color: #fff; }
+    .btn-primary-red:hover { background: #c40812; transform: scale(1.02); }
+    .btn-primary-blue   { background: #2563eb; color: #fff; }
+    .btn-primary-blue:hover { background: #1d4ed8; transform: scale(1.02); }
+    .btn-primary-purple { background: #7c3aed; color: #fff; }
+    .btn-primary-purple:hover { background: #6d28d9; transform: scale(1.02); }
+    .btn-primary-amber  { background: #d97706; color: #fff; }
+    .btn-primary-amber:hover  { background: #b45309; transform: scale(1.02); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.3); color: #fff; background: rgba(255,255,255,0.05); }
+
+    /* ===== STUDIO SECTION ===== */
+    .studio-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 70px 32px;
+      text-align: center;
+      margin-bottom: 0;
+    }
+    .studio-section h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .studio-section p {
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      padding: 40px 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 10px; }
+    footer a:hover { color: #fff; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      nav { padding: 0 16px; }
+      .page-hero { padding: 110px 16px 50px; }
+      .apps-section { padding: 20px 16px 80px; }
+      .nav-right a:not(.btn-nav-dl):not(.back-link) { display: none; }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .app-card {
+      animation: fadeUp .5s ease both;
+    }
+    .app-card:nth-child(1) { animation-delay: .05s; }
+    .app-card:nth-child(2) { animation-delay: .15s; }
+    .app-card:nth-child(3) { animation-delay: .25s; }
+    .app-card:nth-child(4) { animation-delay: .35s; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="LayarFilm" />
+      LAYARFILM
+    </a>
+    <div class="nav-right">
+      <a href="index.html" class="back-link"><i class="fas fa-arrow-left" style="margin-right:6px;"></i>Kembali</a>
+      <a href="our-apps.html" class="active">Our Apps</a>
+      <a href="download.html" class="btn-nav-dl">
+        <i class="fas fa-download" style="margin-right:6px;"></i>Download APK
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="badge">
+      <i class="fas fa-rocket"></i>
+      Dindian006 Studio
+    </div>
+    <h1>Semua Aplikasi <span>Premium Kami</span></h1>
+    <p>Aplikasi gratis berkualitas tinggi tanpa iklan dan tanpa biaya langganan — dibuat dengan ❤️ oleh Dindian006 Studio.</p>
+  </section>
+
+  <!-- Apps Grid -->
+  <section class="apps-section">
+    <div class="apps-grid">
+
+      <!-- LayarFilm -->
+      <div class="app-card layarfilm">
+        <div class="card-banner layarfilm-bg">
+          <span class="app-type-badge badge-movie">Streaming</span>
+          <img src="logo.png" alt="LayarFilm" />
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="app-name">LayarFilm</span>
+            <span class="app-version">v4.0.0</span>
+          </div>
+          <p class="app-desc">
+            Aplikasi streaming film & serial TV terlengkap untuk Android. Tonton ribuan judul dari berbagai genre — gratis, tanpa iklan, dan tanpa batas.
+          </p>
+          <div class="feature-tags">
+            <span class="tag">Film & Serial TV</span>
+            <span class="tag">Anime</span>
+            <span class="tag">4K Quality</span>
+            <span class="tag">Subtitle</span>
+            <span class="tag">Offline</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat">
+              <span class="stat-value" style="color:#ff6b6b;">10K+</span>
+              <span class="stat-label">Judul</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#ff6b6b;">Gratis</span>
+              <span class="stat-label">Harga</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#ff6b6b;">Android</span>
+              <span class="stat-label">Platform</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="https://github.com/dindian006-dot/layarfilm/releases/download/v4.0.0/layarfilm.release.apk"
+               class="btn-download btn-primary-red">
+              <i class="fas fa-download"></i> Download APK
+            </a>
+            <a href="download.html" class="btn-outline">
+              <i class="fas fa-info-circle"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listplay -->
+      <div class="app-card listplay">
+        <div class="card-banner listplay-bg">
+          <span class="app-type-badge badge-media">Media Player</span>
+          <img src="listplay.png" alt="Listplay" />
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="app-name">Listplay</span>
+            <span class="app-version">Terbaru</span>
+          </div>
+          <p class="app-desc">
+            Pemutar media multifungsi yang mendukung berbagai format video dan audio. Tampilan modern, performa ringan, dan mudah digunakan.
+          </p>
+          <div class="feature-tags">
+            <span class="tag">Multi Format</span>
+            <span class="tag">Playlist</span>
+            <span class="tag">Ringan</span>
+            <span class="tag">Offline</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat">
+              <span class="stat-value" style="color:#60a5fa;">All</span>
+              <span class="stat-label">Format</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#60a5fa;">Gratis</span>
+              <span class="stat-label">Harga</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#60a5fa;">Android</span>
+              <span class="stat-label">Platform</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="https://github.com/dindian006-dot/listplay/releases/latest"
+               target="_blank"
+               class="btn-download btn-primary-blue">
+              <i class="fas fa-download"></i> Download APK
+            </a>
+            <a href="https://github.com/dindian006-dot/listplay" target="_blank" class="btn-outline">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- MusicTunel Lite -->
+      <div class="app-card mt-lite">
+        <div class="card-banner mt-lite-bg">
+          <span class="app-type-badge badge-music">Music</span>
+          <img src="musictunel lite.png" alt="MusicTunel Lite" />
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="app-name">MusicTunel Lite</span>
+            <span class="app-version">Terbaru</span>
+          </div>
+          <p class="app-desc">
+            Nikmati musik favoritmu tanpa batas. Versi Lite yang ringan namun kaya fitur — streaming musik berkualitas tinggi langsung dari smartphone-mu.
+          </p>
+          <div class="feature-tags">
+            <span class="tag">Streaming</span>
+            <span class="tag">Offline</span>
+            <span class="tag">Hi-Fi Audio</span>
+            <span class="tag">Ringan</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat">
+              <span class="stat-value" style="color:#c084fc;">∞</span>
+              <span class="stat-label">Lagu</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#c084fc;">Gratis</span>
+              <span class="stat-label">Harga</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#c084fc;">Android</span>
+              <span class="stat-label">Platform</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="https://github.com/dindian006-dot/musictunel/releases/latest"
+               target="_blank"
+               class="btn-download btn-primary-purple">
+              <i class="fas fa-download"></i> Download APK
+            </a>
+            <a href="https://github.com/dindian006-dot/musictunel" target="_blank" class="btn-outline">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- MusicTunel Universal -->
+      <div class="app-card mt-uni">
+        <div class="card-banner mt-uni-bg">
+          <span class="app-type-badge badge-music-uni">Universal</span>
+          <img src="musictunel universal.png" alt="MusicTunel Universal" />
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="app-name">MusicTunel Universal</span>
+            <span class="app-version">Terbaru</span>
+          </div>
+          <p class="app-desc">
+            Versi lengkap MusicTunel dengan semua fitur premium. Dukungan lebih banyak sumber musik, equalizer canggih, dan pengalaman terbaik.
+          </p>
+          <div class="feature-tags">
+            <span class="tag">All Sources</span>
+            <span class="tag">Equalizer</span>
+            <span class="tag">Hi-Fi Audio</span>
+            <span class="tag">Offline</span>
+          </div>
+          <div class="card-stats">
+            <div class="stat">
+              <span class="stat-value" style="color:#fbbf24;">∞</span>
+              <span class="stat-label">Lagu</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#fbbf24;">Gratis</span>
+              <span class="stat-label">Harga</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color:#fbbf24;">Android</span>
+              <span class="stat-label">Platform</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="https://github.com/dindian006-dot/musictunel-universal/releases/latest"
+               target="_blank"
+               class="btn-download btn-primary-amber">
+              <i class="fas fa-download"></i> Download APK
+            </a>
+            <a href="https://github.com/dindian006-dot/musictunel-universal" target="_blank" class="btn-outline">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Studio Banner -->
+  <div class="studio-section">
+    <h2>🚀 Dindian006 Studio</h2>
+    <p>Kami berkomitmen membuat aplikasi Android berkualitas tinggi yang gratis untuk semua orang. Tidak ada iklan, tidak ada biaya tersembunyi.</p>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p style="margin-bottom:12px;">
+      <a href="index.html">Home</a>
+      <a href="about.html">About Us</a>
+      <a href="download.html">Download</a>
+      <a href="terms.html">Terms</a>
+      <a href="legal.html">Legal</a>
+    </p>
+    <p>&copy; 2026 Dindian006 Studio. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
