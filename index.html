@@ -342,10 +342,19 @@
     <div id="video-modal" class="modal video-modal">
         <div class="video-modal-content">
             <span class="close-video-btn">&times;</span>
-            <div class="video-container">
-                <iframe id="trailer-iframe" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <!-- Server Selector Bar -->
+            <div id="server-selector-bar" style="display:none; padding: 10px 15px 0 15px; background: #0a0a0a;">
+                <p style="color:#aaa; font-size:0.75rem; margin:0 0 8px 0; text-transform:uppercase; letter-spacing:1px;">⚡ Pilih Server:</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="server-btn active" id="server-btn-1" onclick="switchServer(1)" style="background:#e50914; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; transition:all 0.2s;">Server 1 (Utama)</button>
+                    <button class="server-btn" id="server-btn-2" onclick="switchServer(2)" style="background:#333; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; transition:all 0.2s;">Server 2</button>
+                    <button class="server-btn" id="server-btn-3" onclick="switchServer(3)" style="background:#333; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; transition:all 0.2s;">Server 3</button>
+                </div>
             </div>
-            <p class="video-legal">Trailers provided by YouTube via TMDB. This site does not host videos.</p>
+            <div class="video-container">
+                <iframe id="trailer-iframe" src="" frameborder="0" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+            </div>
+            <p class="video-legal" style="text-align:center; padding: 8px 15px;">Video disediakan oleh pihak ketiga. Situs ini tidak menyimpan konten apapun.</p>
         </div>
     </div>
 

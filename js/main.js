@@ -441,6 +441,11 @@ async function playTrailer(id, type) {
 function openVideoModal(videoKey) {
   const videoModal = document.getElementById("video-modal");
   const iframe = document.getElementById("trailer-iframe");
+  const serverBar = document.getElementById("server-selector-bar");
+
+  // Hide server selector for YouTube trailers
+  if (serverBar) serverBar.style.display = "none";
+  currentMediaContext = { id: null, type: null, season: 1, episode: 1 };
 
   iframe.src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
 
@@ -451,9 +456,12 @@ function openVideoModal(videoKey) {
 function closeVideoModal() {
   const videoModal = document.getElementById("video-modal");
   const iframe = document.getElementById("trailer-iframe");
+  const serverBar = document.getElementById("server-selector-bar");
 
   iframe.src = "";
   videoModal.style.display = "none";
+  if (serverBar) serverBar.style.display = "none";
+  currentMediaContext = { id: null, type: null, season: 1, episode: 1 };
 
   if (document.getElementById("movie-modal").style.display !== "block") {
     document.body.style.overflow = "auto";
@@ -728,20 +736,53 @@ function handleNavbarScroll() {
   });
 }
 
+// Store current media context for server switching
+let currentMediaContext = { id: null, type: null, season: 1, episode: 1 };
+
+function getEmbedUrl(id, type, season, episode, server) {
+    if (type === 'movie') {
+        if (server === 1) return `https://embed.su/embed/movie/${id}`;
+        if (server === 2) return `https://vidsrc.me/embed/movie?tmdb=${id}`;
+        if (server === 3) return `https://www.2embed.cc/embed/${id}`;
+    } else if (type === 'tv') {
+        if (server === 1) return `https://embed.su/embed/tv/${id}/${season}/${episode}`;
+        if (server === 2) return `https://vidsrc.me/embed/tv?tmdb=${id}&season=${season}&episode=${episode}`;
+        if (server === 3) return `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`;
+    }
+    return "";
+}
+
 function playFullMovie(id, type, season = 1, episode = 1) {
     const videoModal = document.getElementById("video-modal");
-    const iframe = document.getElementById("trailer-iframe"); 
-    
-    let embedUrl = "";
-    
-    if (type === 'movie') {
-        embedUrl = `https://vidsrc.xyz/embed/movie/${id}`;
-    } else if (type === 'tv') {
-        embedUrl = `https://vidsrc.xyz/embed/tv/${id}/${season}/${episode}`;
-    }
+    const iframe = document.getElementById("trailer-iframe");
+    const serverBar = document.getElementById("server-selector-bar");
 
-    iframe.src = embedUrl;
+    // Save context for server switching
+    currentMediaContext = { id, type, season, episode };
+
+    // Show server selector bar only for movies/TV (not trailers)
+    if (serverBar) serverBar.style.display = "block";
+
+    // Reset server buttons to default (Server 1 active)
+    switchServer(1);
+
     videoModal.style.display = "block";
+}
+
+function switchServer(serverNum) {
+    const { id, type, season, episode } = currentMediaContext;
+    if (!id) return;
+
+    const iframe = document.getElementById("trailer-iframe");
+    iframe.src = getEmbedUrl(id, type, season, episode, serverNum);
+
+    // Update active button style
+    [1, 2, 3].forEach(n => {
+        const btn = document.getElementById(`server-btn-${n}`);
+        if (btn) {
+            btn.style.background = n === serverNum ? "#e50914" : "#333";
+        }
+    });
 }
 
 async function fetchSimilarContent(id, type) {
