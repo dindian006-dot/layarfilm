@@ -637,6 +637,14 @@ async function openModal(item, type) {
   const watchBtn = document.getElementById("modal-watch-btn");
   watchBtn.onclick = () => playFullMovie(item.id, type);
 
+  const pencurimovieBtn = document.getElementById("modal-pencurimovie-btn");
+  if (pencurimovieBtn) {
+      pencurimovieBtn.onclick = () => {
+          const query = encodeURIComponent(title);
+          window.open(`https://ww73.pencurimovie.bond/?s=${query}`, "_blank");
+      };
+  }
+
   const modalPlusBtn = document.getElementById("modal-plus-btn");
   modalPlusBtn.onclick = () => {
     toggleMyList(item, type);
@@ -727,9 +735,9 @@ function playFullMovie(id, type, season = 1, episode = 1) {
     let embedUrl = "";
     
     if (type === 'movie') {
-        embedUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1`;
+        embedUrl = `https://vidsrc.xyz/embed/movie/${id}`;
     } else if (type === 'tv') {
-        embedUrl = `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${season}&e=${episode}`;
+        embedUrl = `https://vidsrc.xyz/embed/tv/${id}/${season}/${episode}`;
     }
 
     iframe.src = embedUrl;
